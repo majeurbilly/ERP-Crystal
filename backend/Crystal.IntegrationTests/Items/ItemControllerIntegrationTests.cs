@@ -25,15 +25,15 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetItems_WithValidToken_Returns200Ok()
     {
-        // Arrange : authentification avec le role Employee.
+        // Préparation : authentification avec le role Employee.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         List<ItemResponse>? body = await response.Content.ReadFromJsonAsync<List<ItemResponse>>();
         Assert.NotNull(body);
@@ -42,20 +42,20 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetItems_WithoutAuth_Returns401Unauthorized()
     {
-        // Arrange : suppression explicite du token.
+        // Préparation : suppression explicite du token.
         m_client.DefaultRequestHeaders.Authorization = null;
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task GetItems_ReturnsOnlyActiveItems()
     {
-        // Arrange : preparation des donnees avec un item actif et un inactif.
+        // Préparation : preparation des donnees avec un item actif et un inactif.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
@@ -90,10 +90,10 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
         context.Items.Add(inactiveItem);
         await context.SaveChangesAsync();
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         List<ItemResponse>? body = await response.Content.ReadFromJsonAsync<List<ItemResponse>>();
         Assert.NotNull(body);
@@ -104,7 +104,7 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetItemById_WithValidId_Returns200Ok()
     {
-        // Arrange : creation d'un item actif puis authentification Employee.
+        // Préparation : creation d'un item actif puis authentification Employee.
         using IServiceScope scope = m_factory.Services.CreateScope();
         CrystalDbContext context = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
 
@@ -125,10 +125,10 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync($"/api/items/{item.Id}");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         ItemResponse? body = await response.Content.ReadFromJsonAsync<ItemResponse>();
         Assert.NotNull(body);
@@ -138,35 +138,35 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetItemById_WithInvalidId_Returns404NotFound()
     {
-        // Arrange : authentification Employee.
+        // Préparation : authentification Employee.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items/999999");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task GetItemById_WithoutAuth_Returns401Unauthorized()
     {
-        // Arrange : suppression explicite du token.
+        // Préparation : suppression explicite du token.
         m_client.DefaultRequestHeaders.Authorization = null;
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items/1");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task CreateItem_WithAdminRole_Returns201Created()
     {
-        // Arrange : authentification Admin et payload valide.
+        // Préparation : authentification Admin et payload valide.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -180,18 +180,40 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             InitialQuantity = 0
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/items", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
     }
 
     [Fact]
+    public async Task CreateItem_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation : suppression explicite du token.
+        m_client.DefaultRequestHeaders.Authorization = null;
+
+        CreateItemRequest request = new CreateItemRequest
+        {
+            Name = "No auth item",
+            Description = "Should be unauthorized",
+            Price = 12m,
+            AlertQuantity = 1,
+            InitialQuantity = 0
+        };
+
+        // Exécution
+        HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/items", request);
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateItem_WithEmployeeRole_Returns403Forbidden()
     {
-        // Arrange : authentification Employee.
+        // Préparation : authentification Employee.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
@@ -205,17 +227,17 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             InitialQuantity = 0
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/items", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task CreateItem_WithInvalidData_Returns400BadRequest()
     {
-        // Arrange : authentification Admin avec payload invalide.
+        // Préparation : authentification Admin avec payload invalide.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -229,17 +251,17 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             InitialQuantity = 0
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/items", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task UpdateItem_WithAdminRole_Returns200Ok()
     {
-        // Arrange : recupere un item existant puis authentification Admin.
+        // Préparation : recupere un item existant puis authentification Admin.
         using IServiceScope scope = m_factory.Services.CreateScope();
         CrystalDbContext context = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
         Item item = new Item
@@ -267,20 +289,42 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             BookId = null
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync($"/api/items/{item.Id}", request);
         ItemResponse? body = await response.Content.ReadFromJsonAsync<ItemResponse>();
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(body);
         Assert.Equal("Updated integration name", body.Name);
     }
 
     [Fact]
+    public async Task UpdateItem_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation : suppression explicite du token.
+        m_client.DefaultRequestHeaders.Authorization = null;
+
+        UpdateItemRequest request = new UpdateItemRequest
+        {
+            Name = "No auth update",
+            Description = "Should be unauthorized",
+            Price = 12m,
+            AlertQuantity = 1,
+            BookId = null
+        };
+
+        // Exécution
+        HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/items/1", request);
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task UpdateItem_WithEmployeeRole_Returns403Forbidden()
     {
-        // Arrange : authentification Employee.
+        // Préparation : authentification Employee.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
@@ -294,17 +338,17 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             BookId = null
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/items/1", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task UpdateItem_WithInvalidId_Returns404NotFound()
     {
-        // Arrange : authentification Admin.
+        // Préparation : authentification Admin.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -318,17 +362,17 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             BookId = null
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/items/999999", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task DeleteItem_WithAdminRole_Returns204NoContent()
     {
-        // Arrange : creation d'un item actif puis authentification Admin.
+        // Préparation : creation d'un item actif puis authentification Admin.
         using IServiceScope scope = m_factory.Services.CreateScope();
         CrystalDbContext context = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
         Item item = new Item
@@ -347,10 +391,10 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.DeleteAsync($"/api/items/{item.Id}");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using IServiceScope assertScope = m_factory.Services.CreateScope();
@@ -361,17 +405,30 @@ public sealed class ItemControllerIntegrationTests : IClassFixture<CrystalWebApp
     }
 
     [Fact]
+    public async Task DeleteItem_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation : suppression explicite du token.
+        m_client.DefaultRequestHeaders.Authorization = null;
+
+        // Exécution
+        HttpResponseMessage response = await m_client.DeleteAsync("/api/items/1");
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task DeleteItem_WithEmployeeRole_Returns403Forbidden()
     {
-        // Arrange : authentification Employee.
+        // Préparation : authentification Employee.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.DeleteAsync("/api/items/1");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 

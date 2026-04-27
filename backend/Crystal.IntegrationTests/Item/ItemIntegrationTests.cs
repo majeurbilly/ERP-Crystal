@@ -23,22 +23,22 @@ public sealed class ItemIntegrationTests : IClassFixture<CrystalWebApplicationFa
     [Fact]
     public async Task GetInventory_Returns200()
     {
-        // Arrange : authentification avec un token Employee valide.
+        // Préparation : authentification avec un token Employee valide.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/items");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetInventory_ReturnsItemFields()
     {
-        // Arrange : authentification avec un token Employee valide.
+        // Préparation : authentification avec un token Employee valide.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
@@ -49,7 +49,7 @@ public sealed class ItemIntegrationTests : IClassFixture<CrystalWebApplicationFa
         context.Items.RemoveRange(context.Items);
         await context.SaveChangesAsync();
 
-        Item item = new()
+        Item item = new Item
         {
             Name = "Clean Code",
             Description = "Livre de programmation",
@@ -80,7 +80,7 @@ public sealed class ItemIntegrationTests : IClassFixture<CrystalWebApplicationFa
     [Fact]
     public async Task GetInventory_DoesNotReturnInactiveItems()
     {
-        // Arrange : authentification avec un token Employee valide.
+        // Préparation : authentification avec un token Employee valide.
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));

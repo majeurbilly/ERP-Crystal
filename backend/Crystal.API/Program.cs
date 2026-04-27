@@ -92,7 +92,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
-builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 
 IConfigurationSection jwtSettings = builder.Configuration.GetRequiredSection("Jwt");

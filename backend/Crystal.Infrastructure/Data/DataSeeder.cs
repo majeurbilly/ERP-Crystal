@@ -70,9 +70,9 @@ public static class DataSeeder
         }
     }
 
-    public static async Task SeedLocationsAsync(IServiceProvider serviceProvider)
+    public static async Task SeedLocationsAsync(IServiceProvider p_serviceProvider)
     {
-        CrystalDbContext context = serviceProvider.GetRequiredService<CrystalDbContext>();
+        CrystalDbContext context = p_serviceProvider.GetRequiredService<CrystalDbContext>();
 
         if (await context.Locations.AnyAsync().ConfigureAwait(false))
         {
@@ -99,9 +99,9 @@ public static class DataSeeder
         await context.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    public static async Task SeedAllAsync(IServiceProvider serviceProvider)
+    public static async Task SeedAllAsync(IServiceProvider p_serviceProvider)
     {
-        await SeedRolesAndUsersAsync(serviceProvider).ConfigureAwait(false);
-        await SeedLocationsAsync(serviceProvider).ConfigureAwait(false);
+        await SeedRolesAndUsersAsync(p_serviceProvider).ConfigureAwait(false);
+        await SeedLocationsAsync(p_serviceProvider).ConfigureAwait(false);
     }
 }

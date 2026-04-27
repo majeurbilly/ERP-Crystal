@@ -29,43 +29,43 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetUsers_WithoutAuthorizationHeader_Returns401()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Remove("Authorization");
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUsers_WithEmployeeRole_Returns403()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUsers_WithAdminRole_Returns200AndContent()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         List<UserResponse>? body = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
@@ -76,15 +76,15 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetHrMetrics_WithAdminRole_Returns200Ok()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         HrMetricsResponse? body = await response.Content.ReadFromJsonAsync<HrMetricsResponse>();
@@ -92,24 +92,37 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     }
 
     [Fact]
+    public async Task GetHrMetrics_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation
+        m_client.DefaultRequestHeaders.Remove("Authorization");
+
+        // Exécution
+        HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetHrMetrics_WithEmployeeRole_Returns403Forbidden()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUserById_WithAdminRole_AndValidId_Returns200AndUser()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -123,10 +136,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
 
         string userId = users[0].Id;
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync($"/api/users/{userId}");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         UserResponse? body = await response.Content.ReadFromJsonAsync<UserResponse>();
@@ -138,31 +151,44 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetUserById_WithAdminRole_AndInvalidId_Returns404()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
         const string invalidId = "un-id-qui-n-existe-pas-123";
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync($"/api/users/{invalidId}");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetUserById_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation
+        m_client.DefaultRequestHeaders.Remove("Authorization");
+
+        // Exécution
+        HttpResponseMessage response = await m_client.GetAsync("/api/users/nimporte-quel-id");
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUserById_WithEmployeeRole_Returns403()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users/nimporte-quel-id");
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -172,7 +198,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Remove("Authorization");
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users/me");
 
         // Vérification
@@ -198,7 +224,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             "Bearer",
             CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users/me");
 
         // Vérification
@@ -221,7 +247,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"noauth-{Guid.NewGuid():N}"
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -253,7 +279,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"updated-me-{Guid.NewGuid():N}"
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -290,7 +316,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"invalid-email-{Guid.NewGuid():N}"
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -325,7 +351,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"duplicate-email-{Guid.NewGuid():N}"
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -360,7 +386,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = user2.UserName ?? $"duplicate-username-{Guid.NewGuid():N}"
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -370,7 +396,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task CreateUser_WithAdminRole_AndValidData_Returns201Created()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -384,10 +410,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         UserResponse? body = await response.Content.ReadFromJsonAsync<UserResponse>();
@@ -399,7 +425,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task CreateUser_WithAdminRole_AndInvalidPassword_Returns400BadRequest()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
@@ -413,17 +439,38 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateUser_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation
+        m_client.DefaultRequestHeaders.Remove("Authorization");
+
+        CreateUserRequest request = new CreateUserRequest
+        {
+            Email = $"integration-noauth-create-{Guid.NewGuid():N}@example.com",
+            UserName = $"user-noauth-{Guid.NewGuid():N}",
+            Password = "Password123!",
+            Role = ApplicationRoles.Employee
+        };
+
+        // Exécution
+        HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task CreateUser_WithEmployeeRole_Returns403Forbidden()
     {
-        // Arrange
+        // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
@@ -437,10 +484,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Act
+        // Exécution
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Assert
+        // Vérification
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -470,7 +517,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync($"/api/users/{userId}", request);
 
         // Vérification
@@ -497,7 +544,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         };
         const string invalidId = "faux-id-123";
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync($"/api/users/{invalidId}", request);
 
         // Vérification
@@ -519,11 +566,31 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Action : l'ID importe peu ici car la validation du body échoue.
+        // Exécution : l'ID importe peu ici car la validation du body échoue.
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/any-id", request);
 
         // Vérification
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUser_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation
+        m_client.DefaultRequestHeaders.Remove("Authorization");
+
+        UpdateUserRequest request = new UpdateUserRequest
+        {
+            Email = $"integration-noauth-update-{Guid.NewGuid():N}@example.com",
+            UserName = $"updated-noauth-{Guid.NewGuid():N}",
+            Role = ApplicationRoles.Employee
+        };
+
+        // Exécution
+        HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/nimporte-quel-id", request);
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -541,7 +608,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Role = ApplicationRoles.Employee
         };
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/nimporte-quel-id", request);
 
         // Vérification
@@ -568,7 +635,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
                 "Bearer",
                 CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
 
-            // Action
+            // Exécution
             HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{userId}");
 
             // Vérification HTTP
@@ -596,11 +663,24 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
 
         const string invalidId = "invalid-user-id-for-delete-123";
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{invalidId}");
 
         // Vérification
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteUser_WithoutAuth_Returns401Unauthorized()
+    {
+        // Préparation
+        m_client.DefaultRequestHeaders.Remove("Authorization");
+
+        // Exécution
+        HttpResponseMessage response = await m_client.DeleteAsync("/api/users/nimporte-quel-id");
+
+        // Vérification
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -613,7 +693,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
 
         const string userId = "any-user-id";
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{userId}");
 
         // Vérification
@@ -640,7 +720,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             "Bearer",
             CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
 
-        // Action
+        // Exécution
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
         // Vérification

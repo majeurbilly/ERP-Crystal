@@ -26,7 +26,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
     [Fact]
     public async Task Register_Then_Login_Returns_A_Cryptographically_Valid_JWT()
     {
-        // arrange
+        // Préparation
         const string userName = "integration_user";
         const string email = "integration@test.local";
         const string password = "ValidPass1!a";
@@ -49,7 +49,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
-        // act
+        // Exécution
         HttpResponseMessage loginResponse = await m_client.PostAsJsonAsync(
             "/api/auth/login",
             new LoginRequest
@@ -60,7 +60,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
 
-        // assert
+        // Vérification
         LoginResponse? body = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(body);
