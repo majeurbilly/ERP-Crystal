@@ -26,7 +26,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # 2. LINTER (Biome)
-      - name: Lint: Biome Check
+      - name: "Lint: Biome Check"
         working-directory: ${{ env.workingDirectory }}
         run: npx @biomejs/biome check .
 

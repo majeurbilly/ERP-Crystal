@@ -19,7 +19,7 @@ jobs:
           dotnet-version: "9.x"
 
       # 1. LINTER
-      - name: Lint: Dotnet Format
+      - name: "Lint: Dotnet Format"
         run: dotnet format ${{ env.solutionPath }} --verify-no-changes
 
       # 2. RESTORE & BUILD
