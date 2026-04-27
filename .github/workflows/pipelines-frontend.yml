@@ -1,46 +1,47 @@
-trigger:
-  branches:
-    include: [master, dev]
-  paths:
-    include: [frontend/*]
+on:
+  push:
+    branches: [ "master", "dev" ]
+    paths: [ "frontend/*" ]
 
-pool:
-  vmImage: 'ubuntu-latest'
+env:
+  workingDirectory: "frontend"
 
-variables:
-  workingDirectory: 'frontend'
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
 
-# 1. INSTALL
-- script: npm install -g pnpm
-  displayName: 'Install pnpm'
+      # 1. INSTALL
+      - name: Install pnpm
+        run: npm install -g pnpm
 
-- script: pnpm install --frozen-lockfile
-  workingDirectory: $(workingDirectory)
-  displayName: 'Install Dependencies'
+      - name: Install Dependencies
+        working-directory: ${{ env.workingDirectory }}
+        run: pnpm install --frozen-lockfile
 
-# 2. LINTER (Biome)
-- script: npx @biomejs/biome check .
-  workingDirectory: $(workingDirectory)
-  displayName: 'Lint: Biome Check'
+      # 2. LINTER (Biome)
+      - name: Lint: Biome Check
+        working-directory: ${{ env.workingDirectory }}
+        run: npx @biomejs/biome check .
 
-# 3. BUILD
-- script: pnpm run build
-  workingDirectory: $(workingDirectory)
-  displayName: 'Build Frontend'
+      # 3. BUILD
+      - name: Build Frontend
+        working-directory: ${{ env.workingDirectory }}
+        run: pnpm run build
 
-# 4. TESTS 
-- script: pnpm run test
-  workingDirectory: $(workingDirectory)
-  displayName: 'Run Tests'
+      # 4. TESTS
+      - name: Run Tests
+        working-directory: ${{ env.workingDirectory }}
+        run: pnpm run test
 
-# 5. DOCKER IMAGE
-- script: |
-    chmod +x build-image.sh
-    ./build-image.sh frontend
-  displayName: 'Execute build-image.sh'
+      # 5. DOCKER IMAGE
+      - name: Execute build-image.sh
+        run: |
+          chmod +x build-image.sh
+          ./build-image.sh frontend
