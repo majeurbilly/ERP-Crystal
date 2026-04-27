@@ -1,0 +1,46 @@
+trigger:
+  branches:
+    include: [master, dev]
+  paths:
+    include: [frontend/*]
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  workingDirectory: 'frontend'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Install Node.js'
+
+# 1. INSTALL
+- script: npm install -g pnpm
+  displayName: 'Install pnpm'
+
+- script: pnpm install --frozen-lockfile
+  workingDirectory: $(workingDirectory)
+  displayName: 'Install Dependencies'
+
+# 2. LINTER (Biome)
+- script: npx @biomejs/biome check .
+  workingDirectory: $(workingDirectory)
+  displayName: 'Lint: Biome Check'
+
+# 3. BUILD
+- script: pnpm run build
+  workingDirectory: $(workingDirectory)
+  displayName: 'Build Frontend'
+
+# 4. TESTS 
+- script: pnpm run test
+  workingDirectory: $(workingDirectory)
+  displayName: 'Run Tests'
+
+# 5. DOCKER IMAGE
+- script: |
+    chmod +x build-image.sh
+    ./build-image.sh frontend
+  displayName: 'Execute build-image.sh'

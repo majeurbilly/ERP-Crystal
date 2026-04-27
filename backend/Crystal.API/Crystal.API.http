@@ -1,0 +1,6 @@
+@Crystal.API_HostAddress = http://localhost:5038
+
+GET {{Crystal.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,28 @@
+{
+    "users" : [
+        {
+            "id": "1",
+            "email": "admin@crystal.local",
+            "userName": "admin67",
+            "role": "admin"
+        },
+        {
+            "id": "2",
+            "email": "employee@crystal.local",
+            "userName": "employee67",
+            "role": "employee"
+        },
+        {
+            "id": "3",
+            "email": "assistant@crystal.local",
+            "userName": "assistant67",
+            "role": "assistant"
+        },
+        {
+            "id": "4",
+            "email": "gerant@crystal.local",
+            "userName": "gerant67",
+            "role": "gerant"
+        }
+    ]
+}

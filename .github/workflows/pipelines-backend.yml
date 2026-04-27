@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include: [master, dev]
+  paths:
+    include: [backend/*]
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  solutionPath: 'backend/'
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '9.x'
+
+# 1. LINTER
+- script: dotnet format $(solutionPath) --verify-no-changes
+  displayName: 'Lint: Dotnet Format'
+
+# 2. RESTORE & BUILD
+- script: dotnet restore $(solutionPath)
+  displayName: 'Restore Dependencies'
+
+- script: dotnet build $(solutionPath) --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build Solution'
+
+# 3. TESTS (Unit & Integration)
+- script: dotnet test $(solutionPath) --configuration $(buildConfiguration) --no-build --logger trx
+  displayName: 'Run All Tests'
+
+# 4. DOCKER IMAGE
+- script: |
+    chmod +x build-image.sh
+    ./build-image.sh backend
+  displayName: 'Execute build-image.sh'
