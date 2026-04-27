@@ -1,0 +1,20 @@
+# Système d'exploitation
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Éditeurs de code (VS Code, Visual Studio, Rider)
+.vscode/
+.idea/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Fichiers d'environnement globaux
+.env

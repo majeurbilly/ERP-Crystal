@@ -1,0 +1,23 @@
+# Dossiers de build et de compilation
+[Bb]in/
+[Oo]bj/
+TestResults/
+
+# Fichiers de configuration locaux (Sécurité)
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Fichiers de log
+*.log
+
+# Caches NuGet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+bin/
+obj/
+.vs/
+**/bin/
+**/obj/
