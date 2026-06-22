@@ -1,17 +1,18 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import apiClient from "../../api/apiClient";
-import PageLogin from "../../pages/PageLogin";
 import { AuthProvider } from "../../context/AuthContext";
+import { LanguageProvider } from "../../context/TranslationContext";
 import { ROUTE_DASHBOARD, ROUTE_ROOT } from "../routeNames";
+import LoginPage from "../../pages/LoginPage";
 
 vi.mock("../../api/apiClient", () => ({
 	default: {
 		post: vi.fn(),
 	},
 }));
+
+import apiClient from "../../api/apiClient";
 
 function makeFakeJwtPayload(payload: Record<string, unknown>): string {
 	const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }))
@@ -36,11 +37,8 @@ describe("PageLogin (intégration UI)", () => {
 	});
 
 	it("Happy path", async () => {
-		const user = userEvent.setup();
-
 		const token = makeFakeJwtPayload({
-			"http://schemas.microsoft.com/ws/2008/06/identity/claims/role":
-				"Assistant",
+			"http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Assistant",
 		});
 
 		vi.mocked(apiClient.post).mockResolvedValue({
@@ -49,28 +47,34 @@ describe("PageLogin (intégration UI)", () => {
 		});
 
 		render(
-			<AuthProvider>
-				<MemoryRouter initialEntries={["/"]}>
-					<Routes>
-						<Route path={ROUTE_ROOT} element={<PageLogin />} />
-						<Route path={ROUTE_DASHBOARD} element={<div>Tableau de bord</div>} />
-					</Routes>
-				</MemoryRouter>
-			</AuthProvider>,
+			<LanguageProvider>
+				<AuthProvider>
+					<MemoryRouter initialEntries={[ROUTE_ROOT]}>
+						<Routes>
+							<Route path={ROUTE_ROOT} element={<LoginPage />} />
+							<Route path={ROUTE_DASHBOARD} element={<div>Tableau de bord</div>} />
+						</Routes>
+					</MemoryRouter>
+				</AuthProvider>
+			</LanguageProvider>
 		);
 
-		await user.type(screen.getByLabelText(/^email$/i), "a@b.ca");
-		await user.type(screen.getByLabelText(/^password$/i), "secret123");
+		const emailInput = screen.getByLabelText(/email|courriel/i, { selector: "input" });
+		const passwordInput = screen.getByLabelText(/password|mot de passe/i, { selector: "input" });
 
-		await user.click(screen.getAllByRole("button", { name: /log in/i })[0]);
+		fireEvent.change(emailInput, { target: { value: "a@b.ca" } });
+		fireEvent.change(passwordInput, { target: { value: "secret123" } });
 
-		expect(await screen.findByText("Tableau de bord")).toBeInTheDocument();
-		expect(localStorage.getItem("token")).toBe(token);
+		const loginButton = screen.getAllByRole("button", { name: /log in|connexion/i })[0];
+		fireEvent.click(loginButton);
+
+		await waitFor(() => {
+			expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
+			expect(localStorage.getItem("token")).toBe(token);
+		});
 	});
 
 	it("affiche un message d'erreur lorsque l'API retourne une erreur", async () => {
-		const user = userEvent.setup();
-
 		vi.mocked(apiClient.post).mockRejectedValue({
 			isAxiosError: true,
 			response: {
@@ -80,20 +84,26 @@ describe("PageLogin (intégration UI)", () => {
 		});
 
 		render(
-			<AuthProvider>
-				<MemoryRouter initialEntries={["/"]}>
-					<Routes>
-						<Route path={ROUTE_ROOT} element={<PageLogin />} />
-						<Route path={ROUTE_DASHBOARD} element={<div>Tableau de bord</div>} />
-					</Routes>
-				</MemoryRouter>
-			</AuthProvider>,
+			<LanguageProvider>
+				<AuthProvider>
+					<MemoryRouter initialEntries={[ROUTE_ROOT]}>
+						<Routes>
+							<Route path={ROUTE_ROOT} element={<LoginPage />} />
+							<Route path={ROUTE_DASHBOARD} element={<div>Tableau de bord</div>} />
+						</Routes>
+					</MemoryRouter>
+				</AuthProvider>
+			</LanguageProvider>
 		);
 
-		await user.type(screen.getByLabelText(/^email$/i), "a@b.ca");
-		await user.type(screen.getByLabelText(/^password$/i), "wrong");
+		const emailInput = screen.getByLabelText(/email|courriel/i, { selector: "input" });
+		const passwordInput = screen.getByLabelText(/password|mot de passe/i, { selector: "input" });
 
-		await user.click(screen.getAllByRole("button", { name: /log in/i })[0]);
+		fireEvent.change(emailInput, { target: { value: "a@b.ca" } });
+		fireEvent.change(passwordInput, { target: { value: "wrong" } });
+
+		const loginButton = screen.getAllByRole("button", { name: /log in|connexion/i })[0];
+		fireEvent.click(loginButton);
 
 		const alerte = await screen.findByRole("alert");
 		expect(alerte).toHaveTextContent("Identifiants invalides.");

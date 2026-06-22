@@ -1,9 +1,9 @@
-﻿using Crystal.Core;
+﻿using Crystal.Core.Authorization;
 using Crystal.Core.DTOs.Requests;
 using Crystal.Core.DTOs.Responses;
-using Crystal.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Crystal.Core.Interfaces.Services;
+using Crystal.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crystal.API.Controllers;
@@ -38,7 +38,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [Authorize(Roles = $"{ApplicationRoles.Admin},{ApplicationRoles.Gerant}")]
+    [Authorize]
+    [RequirePermission(PermissionActions.Create, PermissionSubjects.User)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest p_request, CancellationToken p_cancellationToken)
     {
         if (!ModelState.IsValid)

@@ -1,28 +1,216 @@
 {
-    "users" : [
+  "roles": [
+    {
+      "id": "Gerant",
+      "name": "Gérant de succursale",
+      "permissions": [
+        { "action": "read", "subject": "hr_dashboard" },
+        { "action": "manage", "subject": "employee_profile" },
+        { "action": "manage", "subject": "leave_request" },
+        { "action": "read", "subject": "location" },
+        { "action": "update", "subject": "location" },
+        { "action": "update", "subject": "inventory_quantity" }
+      ]
+    },
+    {
+      "id": "Admin",
+      "name": "Administrateur",
+      "permissions": [
         {
-            "id": "1",
-            "email": "admin@crystal.local",
-            "userName": "admin67",
-            "role": "admin"
-        },
-        {
-            "id": "2",
-            "email": "employee@crystal.local",
-            "userName": "employee67",
-            "role": "employee"
-        },
-        {
-            "id": "3",
-            "email": "assistant@crystal.local",
-            "userName": "assistant67",
-            "role": "assistant"
-        },
-        {
-            "id": "4",
-            "email": "gerant@crystal.local",
-            "userName": "gerant67",
-            "role": "gerant"
+          "action": "manage",
+          "subject": "all"
         }
-    ]
+      ]
+    }
+  ],
+  "employee-profiles": [
+    {
+      "id": "101",
+      "firstName": "Jean",
+      "lastName": "Tremblay",
+      "email": "jean@cristal.com",
+      "applicationUserId": "user-1",
+      "hiringDate": "2026-01-15",
+      "jobPositionId": 4,
+      "jobPositionName": "Commis d'inventaire",
+      "salary": 45000,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 2
+    },
+    {
+      "id": "104",
+      "firstName": "Camille",
+      "lastName": "Roy",
+      "email": "camille@cristal.com",
+      "applicationUserId": "user-4",
+      "hiringDate": "2026-04-12",
+      "jobPositionId": 1,
+      "jobPositionName": "Commis",
+      "salary": 43000,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 3
+    },
+    {
+      "id": "105",
+      "firstName": "Marc",
+      "lastName": "Gagnon",
+      "email": "marc@cristal.com",
+      "applicationUserId": "user-5",
+      "hiringDate": "2026-04-20",
+      "jobPositionId": 2,
+      "jobPositionName": "Caissier",
+      "salary": 44000,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 4
+    },
+    {
+      "id": "106",
+      "firstName": "Sophie",
+      "lastName": "Lavoie",
+      "email": "sophie@cristal.com",
+      "applicationUserId": "user-6",
+      "hiringDate": "2026-04-25",
+      "jobPositionId": 1,
+      "jobPositionName": "Commis",
+      "salary": 42500,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 3
+    },
+    {
+      "id": "107",
+      "firstName": "Julien",
+      "lastName": "Bernier",
+      "email": "julien@cristal.com",
+      "applicationUserId": "user-7",
+      "hiringDate": "2026-05-02",
+      "jobPositionId": 2,
+      "jobPositionName": "Caissier",
+      "salary": 41500,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 3
+    },
+    {
+      "id": "108",
+      "firstName": "Lea",
+      "lastName": "Morin",
+      "email": "lea@cristal.com",
+      "applicationUserId": "user-8",
+      "hiringDate": "2026-05-08",
+      "jobPositionId": 2,
+      "jobPositionName": "Caissier",
+      "salary": 42000,
+      "status": "Active",
+      "isDeleted": false,
+      "locationId": 4
+    }
+  ],
+  "locations": [
+    {
+      "id": "3",
+      "title": "Succursale Sainte-Foy",
+      "address": "2450 chemin Sainte-Foy",
+      "description": "Succursale du secteur Sainte-Foy"
+    },
+    {
+      "id": "4",
+      "title": "Succursale Québec",
+      "address": "1000 rue de Québec",
+      "description": "Succursale de Québec"
+    }
+  ],
+  "job-positions": [
+    {
+      "id": "1",
+      "name": "Commis",
+      "description": "Service en succursale",
+      "isDeleted": false
+    },
+    {
+      "id": "2",
+      "name": "Caissier",
+      "description": "Service caisse",
+      "isDeleted": false
+    }
+  ],
+  "schedules": [
+    {
+      "id": "5",
+      "employeeProfileId": 104,
+      "employeeFirstName": "Camille",
+      "employeeLastName": "Roy",
+      "jobPositionId": 1,
+      "jobPositionName": "Commis",
+      "locationId": 3,
+      "locationTitle": "Succursale Sainte-Foy",
+      "date": "2026-05-29",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "isDeleted": false
+    },
+    {
+      "id": "6",
+      "employeeProfileId": null,
+      "employeeFirstName": null,
+      "employeeLastName": null,
+      "jobPositionId": 1,
+      "jobPositionName": "Commis",
+      "locationId": 3,
+      "locationTitle": "Succursale Sainte-Foy",
+      "date": "2026-05-30",
+      "startTime": "10:00",
+      "endTime": "18:00",
+      "isDeleted": false
+    },
+    {
+      "employeeProfileId": 105,
+      "jobPositionId": 2,
+      "locationId": 4,
+      "date": "2026-05-29",
+      "startTime": "08:00:00",
+      "endTime": "16:00:00",
+      "id": "7"
+    },
+    {
+      "id": "9",
+      "employeeProfileId": 107,
+      "employeeFirstName": "Julien",
+      "employeeLastName": "Bernier",
+      "jobPositionId": 2,
+      "jobPositionName": "Caissier",
+      "locationId": 3,
+      "locationTitle": "Succursale Sainte-Foy",
+      "date": "2026-05-29",
+      "startTime": "13:00",
+      "endTime": "18:00",
+      "isDeleted": false
+    }
+  ],
+  "authors": [
+    {
+      "id": "1",
+      "name": "J.R.R. Tolkien",
+      "description": "lotr"
+    },
+    {
+      "id": "2",
+      "name": "Donald Trump",
+      "description": "idiot"
+    },
+    {
+      "id": "3",
+      "name": "Kentaro Miura",
+      "description": "based"
+    },
+    {
+      "id": "GhJIGHFGQw0",
+      "name": "tamere",
+      "description": "enshort"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }

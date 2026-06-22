@@ -27,13 +27,13 @@ public class AuthControllerTests
             Token = "fake-jwt-token-for-unit-test",
             UserId = "user-id-123",
             UserName = "testuser",
-            Roles = new[] { ApplicationRoles.Employee }
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        Mock<IAuthService> mockAuthService = new Mock<IAuthService>();
+        Mock<IAuthService> mockAuthService = new();
 
         mockAuthService
-            .Setup(s => s.LoginAsync(It.IsAny<LoginRequest>(), It.IsAny<CancellationToken>()))
+            .Setup(p_s => p_s.LoginAsync(It.IsAny<LoginRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         // Act
@@ -51,12 +51,12 @@ public class AuthControllerTests
         Assert.Equal(expected.Token, value.Token);
         Assert.Equal(expected.UserId, value.UserId);
         Assert.Equal(expected.UserName, value.UserName);
-        Assert.Equal(expected.Roles, value.Roles);
+        Assert.Equal(expected.DynamicRoleId, value.DynamicRoleId);
 
         mockAuthService.Verify(
-            s => s.LoginAsync(
-                It.Is<LoginRequest>(r =>
-                    r.GetLoginIdentifier() == request.GetLoginIdentifier() && r.Password == request.Password),
+            p_s => p_s.LoginAsync(
+                It.Is<LoginRequest>(p_r =>
+                    p_r.GetLoginIdentifier() == request.GetLoginIdentifier() && p_r.Password == request.Password),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -71,10 +71,10 @@ public class AuthControllerTests
             Password = "WrongPass1!"
         };
 
-        Mock<IAuthService> mockAuthService = new Mock<IAuthService>();
+        Mock<IAuthService> mockAuthService = new();
 
         mockAuthService
-            .Setup(s => s.LoginAsync(It.IsAny<LoginRequest>(), It.IsAny<CancellationToken>()))
+            .Setup(p_s => p_s.LoginAsync(It.IsAny<LoginRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((LoginResponse?)null);
 
         AuthController controller = new(mockAuthService.Object);
@@ -88,9 +88,9 @@ public class AuthControllerTests
         Assert.Equal(StatusCodes.Status401Unauthorized, unauthorized.StatusCode);
 
         mockAuthService.Verify(
-            s => s.LoginAsync(
-                It.Is<LoginRequest>(r =>
-                    r.GetLoginIdentifier() == request.GetLoginIdentifier() && r.Password == request.Password),
+            p_s => p_s.LoginAsync(
+                It.Is<LoginRequest>(p_r =>
+                    p_r.GetLoginIdentifier() == request.GetLoginIdentifier() && p_r.Password == request.Password),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -104,7 +104,7 @@ public class AuthControllerTests
             Email = "new@example.com",
             UserName = "newuser",
             Password = "ValidPass1!",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
         RegisterResult serviceResult = new()
@@ -112,10 +112,10 @@ public class AuthControllerTests
             Succeeded = true
         };
 
-        Mock<IAuthService> mockAuthService = new Mock<IAuthService>();
+        Mock<IAuthService> mockAuthService = new();
 
         mockAuthService
-            .Setup(s => s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
+            .Setup(p_s => p_s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
 
         AuthController controller = new(mockAuthService.Object);
@@ -129,12 +129,12 @@ public class AuthControllerTests
         Assert.Equal(StatusCodes.Status200OK, ok.StatusCode);
 
         mockAuthService.Verify(
-            s => s.RegisterAsync(
-                It.Is<RegisterRequest>(r =>
-                    r.Email == request.Email
-                    && r.UserName == request.UserName
-                    && r.Password == request.Password
-                    && r.Role == request.Role),
+            p_s => p_s.RegisterAsync(
+                It.Is<RegisterRequest>(p_r =>
+                    p_r.Email == request.Email
+                    && p_r.UserName == request.UserName
+                    && p_r.Password == request.Password
+                    && p_r.DynamicRoleId == request.DynamicRoleId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -148,7 +148,7 @@ public class AuthControllerTests
             Email = "badrole@example.com",
             UserName = "badroleuser",
             Password = "ValidPass1!",
-            Role = "Invalid"
+            DynamicRoleId = "Invalid"
         };
 
         RegisterResult serviceResult = new()
@@ -157,10 +157,10 @@ public class AuthControllerTests
             Errors = new[] { "Invalid role" }
         };
 
-        Mock<IAuthService> mockAuthService = new Mock<IAuthService>();
+        Mock<IAuthService> mockAuthService = new();
 
         mockAuthService
-            .Setup(s => s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
+            .Setup(p_s => p_s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
 
         AuthController controller = new(mockAuthService.Object);
@@ -174,12 +174,12 @@ public class AuthControllerTests
         Assert.Equal(StatusCodes.Status400BadRequest, badRequest.StatusCode);
 
         mockAuthService.Verify(
-            s => s.RegisterAsync(
-                It.Is<RegisterRequest>(r =>
-                    r.Email == request.Email
-                    && r.UserName == request.UserName
-                    && r.Password == request.Password
-                    && r.Role == request.Role),
+            p_s => p_s.RegisterAsync(
+                It.Is<RegisterRequest>(p_r =>
+                    p_r.Email == request.Email
+                    && p_r.UserName == request.UserName
+                    && p_r.Password == request.Password
+                    && p_r.DynamicRoleId == request.DynamicRoleId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -193,7 +193,7 @@ public class AuthControllerTests
             Email = "fail@example.com",
             UserName = "failuser",
             Password = "weak",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
         string[] identityErrors =
@@ -208,10 +208,10 @@ public class AuthControllerTests
             Errors = identityErrors
         };
 
-        Mock<IAuthService> mockAuthService = new Mock<IAuthService>();
+        Mock<IAuthService> mockAuthService = new();
 
         mockAuthService
-            .Setup(s => s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
+            .Setup(p_s => p_s.RegisterAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceResult);
 
         AuthController controller = new(mockAuthService.Object);
@@ -230,17 +230,17 @@ public class AuthControllerTests
 
         JsonElement errorsElement = doc.RootElement.GetProperty("errors");
 
-        string[] receivedErrors = errorsElement.EnumerateArray().Select(e => e.GetString()!).ToArray();
+        string[] receivedErrors = errorsElement.EnumerateArray().Select(p_e => p_e.GetString()!).ToArray();
 
         Assert.Equal(identityErrors, receivedErrors);
 
         mockAuthService.Verify(
-            s => s.RegisterAsync(
-                It.Is<RegisterRequest>(r =>
-                    r.Email == request.Email
-                    && r.UserName == request.UserName
-                    && r.Password == request.Password
-                    && r.Role == request.Role),
+            p_s => p_s.RegisterAsync(
+                It.Is<RegisterRequest>(p_r =>
+                    p_r.Email == request.Email
+                    && p_r.UserName == request.UserName
+                    && p_r.Password == request.Password
+                    && p_r.DynamicRoleId == request.DynamicRoleId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

@@ -9,6 +9,18 @@ import checker from "vite-plugin-checker";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+	server: {
+		proxy: {
+			"/api": {
+				target: "http://localhost:8080",
+				changeOrigin: true,
+			},
+			"/images": {
+				target: "http://localhost:8080",
+				changeOrigin: true,
+			},
+		},
+	},
 	resolve: {
 		alias: {
 			"jwt-decode": path.resolve(__dirname, "src/shims/jwt-decode.ts"),

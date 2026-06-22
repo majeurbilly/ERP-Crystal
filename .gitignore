@@ -16,5 +16,20 @@ Thumbs.db
 *.userosscache
 *.sln.docstates
 
+# Nix
+result
+result-*
+.direnv
+
 # Fichiers d'environnement globaux
 .env
+
+.cursorrules
+
+# Playwright E2E
+e2e/fixtures/storage/*.json
+playwright-report/
+test-results/
+blob-report/
+node_modules/
+package-lock.json

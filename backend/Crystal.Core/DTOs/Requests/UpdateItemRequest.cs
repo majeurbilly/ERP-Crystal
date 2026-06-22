@@ -1,19 +1,21 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace Crystal.Core.DTOs.Requests;
+﻿namespace Crystal.Core.DTOs.Requests;
 
 public class UpdateItemRequest
 {
-    [Required]
     public string Name { get; set; } = string.Empty;
-
     public string? Description { get; set; }
-
-    [Required]
-    [Range(0.01, double.MaxValue)]
+    public string? Distributor { get; set; }
     public decimal Price { get; set; }
-
     public int AlertQuantity { get; set; }
+    public bool? IsActive { get; set; }
 
-    public int? BookId { get; set; }
+    public List<int>? CategoryIds { get; set; }
+
+    public string? Isbn { get; set; }
+
+    public DateOnly? PublicationDate { get; set; }
+
+    public List<string>? Authors { get; set; }
+
+    public List<string>? Publishers { get; set; }
 }

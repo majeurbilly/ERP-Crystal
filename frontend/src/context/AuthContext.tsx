@@ -1,37 +1,40 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { type UserRole } from '../data/userRoles';
-import { isUserRole } from '../data/devAuth';
-import { extractServerRoleFromJwt, extractUserIdFromJwt } from '../data/authJwt';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { extractUserIdFromJwt } from '../data/utils/authJwt';
+import type { DynamicUserRole } from '../data/types/hr/dynamicUserRole';
+import type { EmployeeProfile } from '../data/types/hr/employeeProfile';
+import { EntityProvider } from './EntityContext';
+import employeeProfileService from '../api/services/hr/employeeProfileService';
+import permissionService from '../api/services/hr/permissionService';
+import userService from '../api/services/hr/userService';
+import {
+    clearSessionExpiredHandler,
+    isInvalidSessionError,
+    registerSessionExpiredHandler,
+} from '../api/sessionUtils';
 
-
-/**
- * CODE TEMPORAIRE DE WILL, CECI EXISTE POUR EMPECHER LE ID DES UTILISATEURS D'ETRE DIFFERENT CHAQUE FOIS
- */
-const ROLE_IDS: Record<string, string> = {
-    "admin@crystal.local": "1",
-    "employee@crystal.local": "2",
-    "assistant@crystal.local": "3",
-    "gerant@crystal.local": "4",
-};
-/**
- * FIN CODE WILL
- */
+export interface SessionUser {
+    id: string;
+    dynamicRole: DynamicUserRole | null;
+    employeeProfile: EmployeeProfile | undefined;
+    userName: string;
+    email: string;
+}
 
 interface AuthContextType {
     token: string | null;
-    role: UserRole | null;
-    id: string | null;
-    login: (token: string, email?: string) => void;
+    user: SessionUser | null;
+    login: (token: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
+    loading: boolean;
 }
 
-const getRoleFromToken = (token: string | null): UserRole | null => {
+const tokenLocalStorage: string = "token";
+
+const getIdFromToken = (token: string | null): string | null => {
     if (!token) return null;
     try {
-        const rawRole = extractServerRoleFromJwt(token);
-        const normalized = rawRole.toLowerCase();
-        return isUserRole(normalized) ? normalized : null;
+        return extractUserIdFromJwt(token);
     } catch {
         return null;
     }
@@ -40,52 +43,119 @@ const getRoleFromToken = (token: string | null): UserRole | null => {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+    const [token, setToken] = useState<string | null>(localStorage.getItem(tokenLocalStorage));
 
+    const [loading, setLoading] = useState<boolean>(!!localStorage.getItem(tokenLocalStorage));
 
-    const [id, setId] = useState<string | null>(() => {
-        const savedId = localStorage.getItem("user_id");
-        if (savedId) return savedId;
+    const [asyncUserData, setAsyncUserData] = useState<{
+        profile: EmployeeProfile | undefined;
+        dynamicRole: DynamicUserRole | null;
+        userName: string;
+        email: string;
+    }>({ profile: undefined, dynamicRole: null, userName: "", email: "" });
 
-        const token = localStorage.getItem("token");
-        return token ? extractUserIdFromJwt(token) : null;
-    });
+    const logout = useCallback(() => {
+        localStorage.removeItem(tokenLocalStorage);
+        setToken(null);
 
-    const [role, setRole] = useState<UserRole | null>(() =>
-        getRoleFromToken(localStorage.getItem("token"))
-    );
+        localStorage.removeItem('sidebar_inventory_open');
+        localStorage.removeItem('sidebar_hr_open');
+    }, []);
 
-    const login = (newToken: string, email?: string) => {
-        const newRole = getRoleFromToken(newToken);
+    useEffect(() => {
+        registerSessionExpiredHandler(logout);
+        return () => clearSessionExpiredHandler();
+    }, [logout]);
 
-        let newId;
-        if (email) {
-            newId = ROLE_IDS[email];
+    const id = getIdFromToken(token);
+
+    const user = useMemo<SessionUser | null>(() => {
+        if (!id) return null;
+        return {
+            id,
+            dynamicRole: asyncUserData.dynamicRole,
+            employeeProfile: asyncUserData.profile,
+            userName: asyncUserData.userName || id,
+            email: asyncUserData.email,
+        };
+    }, [id, asyncUserData]);
+
+    useEffect(() => {
+        let isCurrentRequest = true;
+
+        if (id) {
+            setLoading(true);
+
+            Promise.allSettled([
+                employeeProfileService.getMe(),
+                permissionService.getMyPermissions(),
+                userService.getMe(),
+            ]).then((results) => {
+                if (!isCurrentRequest) {
+                    return;
+                }
+
+                const profileResult = results[0];
+                const permissionsResult = results[1];
+                const meResult = results[2];
+
+                if (
+                    (meResult.status === "rejected" && isInvalidSessionError(meResult.reason))
+                    || (permissionsResult.status === "rejected" && isInvalidSessionError(permissionsResult.reason))
+                ) {
+                    logout();
+                    setLoading(false);
+                    return;
+                }
+
+                const profile: EmployeeProfile | undefined =
+                    profileResult.status === "fulfilled" ? profileResult.value : undefined;
+
+                const myPermissions =
+                    permissionsResult.status === "fulfilled" ? permissionsResult.value : null;
+
+                const me = meResult.status === "fulfilled" ? meResult.value : null;
+
+                const dynamicRole: DynamicUserRole | null = myPermissions
+                    ? {
+                        id: myPermissions.roleId,
+                        name: myPermissions.roleName,
+                        permissions: myPermissions.permissions,
+                    }
+                    : null;
+
+                setAsyncUserData({
+                    profile,
+                    dynamicRole,
+                    userName: me?.userName ?? "",
+                    email: me?.email ?? "",
+                });
+
+                setLoading(false);
+            });
         } else {
-            newId = extractUserIdFromJwt(newToken);
+            setAsyncUserData({ profile: undefined, dynamicRole: null, userName: "", email: "" });
+            setLoading(false);
         }
 
-        localStorage.setItem("token", newToken);
-        localStorage.setItem("user_id", newId); //CODE TEMPORAIRE
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [id, logout]);
 
+    const login = (newToken: string) => {
+        localStorage.setItem(tokenLocalStorage, newToken);
         setToken(newToken);
-        setRole(newRole);
-        setId(newId);
-    };
-
-    const logout = () => {
-        localStorage.removeItem("token");
-        setToken(null);
-        setRole(null);
-        setRole(null);
     };
 
     const isAuthenticated = !!token;
 
     return (
-        <AuthContext.Provider value={{ token, role, id, login, logout, isAuthenticated }}>
-            {children}
-        </AuthContext.Provider>
+        <EntityProvider>
+            <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated, loading }}>
+                {children}
+            </AuthContext.Provider>
+        </EntityProvider>
     );
 }
 

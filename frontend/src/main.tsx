@@ -8,6 +8,7 @@ import { SidebarProvider } from "./context/SidebarContext.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { CustomThemeProvider } from "./context/CustomThemeContext.tsx";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LanguageProvider } from "./context/TranslationContext.tsx";
 
 
 const rootElement = document.getElementById("root");
@@ -26,7 +27,9 @@ createRoot(rootElement).render(
 				<AuthProvider>
 					<CustomThemeProvider>
 						<SidebarProvider>
-							<App />
+							<LanguageProvider>
+								<App />
+							</LanguageProvider>
 						</SidebarProvider>
 					</CustomThemeProvider>
 				</AuthProvider>

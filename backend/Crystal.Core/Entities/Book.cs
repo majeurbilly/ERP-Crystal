@@ -2,10 +2,10 @@
 
 public class Book
 {
-    public int Id { get; set; }
-
     public int ItemId { get; set; }
     public Item Item { get; set; } = null!;
+
+    public string? Isbn { get; set; }
 
     public DateOnly PublicationDate { get; set; }
 

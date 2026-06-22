@@ -1,31 +1,45 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Crystal.Core;
+using Crystal.Core.Entities;
+using Crystal.Infrastructure.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Crystal.IntegrationTests;
 
-/// <summary>
-/// Hôte de test : environnement Testing + SQLite en mémoire (voir Program.cs) et JWT dédiés aux tests.
-/// </summary>
 public sealed class CrystalWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly string m_sqliteDatabaseName = $"crystal-it-{Guid.NewGuid():N}";
+
     public const string JwtKey = "CleIntegrationTestsAssezLonguePourHmacSha256!!";
     public const string JwtIssuer = "CrystalIntegrationTests";
     public const string JwtAudience = "CrystalIntegrationTestsUsers";
+
+    private static readonly IReadOnlyDictionary<string, string> SeedEmailByRole = new Dictionary<string, string>
+    {
+        [ApplicationRoles.Admin] = "admin@crystal.local",
+        [ApplicationRoles.Gerant] = "gerant@crystal.local",
+        [ApplicationRoles.Assistant] = "assistant@crystal.local",
+        [ApplicationRoles.Employee] = "employee@crystal.local",
+    };
 
     protected override void ConfigureWebHost(IWebHostBuilder p_builder)
     {
         p_builder.UseEnvironment("Testing");
 
-        p_builder.ConfigureAppConfiguration((_, config) =>
+        p_builder.ConfigureAppConfiguration((p_, p_config) =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            p_config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Jwt:Key"] = JwtKey,
                 ["Jwt:Issuer"] = JwtIssuer,
@@ -33,11 +47,19 @@ public sealed class CrystalWebApplicationFactory : WebApplicationFactory<Program
             });
         });
 
-        p_builder.ConfigureServices(services =>
+        p_builder.ConfigureServices(p_services =>
         {
-            services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+            p_services.RemoveAll<SqliteConnection>();
+            p_services.AddSingleton(_ =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
+                SqliteConnection connection = new($"Data Source={m_sqliteDatabaseName};Mode=Memory;Cache=Shared");
+                connection.Open();
+                return connection;
+            });
+
+            p_services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, p_options =>
+            {
+                p_options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtKey)),
@@ -48,24 +70,18 @@ public sealed class CrystalWebApplicationFactory : WebApplicationFactory<Program
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
                     NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
-                    RoleClaimType = System.Security.Claims.ClaimTypes.Role
                 };
             });
         });
     }
 
-    public static string CreateJwtForRoles(params string[] p_roles)
+    public static string CreateJwtForUserId(string p_userId)
     {
         List<Claim> claims =
         [
-            new Claim(JwtRegisteredClaimNames.Sub, "integration-test-actor"),
-            new Claim(ClaimTypes.NameIdentifier, "integration-test-actor"),
+            new Claim(JwtRegisteredClaimNames.Sub, p_userId),
+            new Claim(ClaimTypes.NameIdentifier, p_userId),
         ];
-
-        foreach (string role in p_roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
 
         SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(JwtKey));
         SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
@@ -78,5 +94,46 @@ public sealed class CrystalWebApplicationFactory : WebApplicationFactory<Program
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public static string CreateJwtForUserIdAndRoles(string p_userId, params string[] p_roles)
+    {
+        return CreateJwtForUserId(p_userId);
+    }
+
+    public static string CreateJwtForRoles(params string[] p_roles)
+    {
+        return CreateJwtForUserId("integration-test-actor");
+    }
+
+    public async Task<string> CreateJwtForSeededRoleAsync(string p_role)
+    {
+        if (!SeedEmailByRole.TryGetValue(p_role, out string? email))
+        {
+            throw new ArgumentException($"No seed account mapped for role '{p_role}'.", nameof(p_role));
+        }
+
+        using IServiceScope scope = Services.CreateScope();
+        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        CrystalDbContext context = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
+
+        ApplicationUser? user = await userManager.FindByEmailAsync(email).ConfigureAwait(false);
+
+        if (user is null)
+        {
+            user = await context.Users
+                .Where(p_u => p_u.DynamicRoleId == p_role)
+                .OrderByDescending(p_u => p_u.IsActive)
+                .ThenBy(p_u => p_u.Id)
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+        }
+
+        if (user is null)
+        {
+            throw new InvalidOperationException($"Seed user for role '{p_role}' (expected email '{email}') was not found.");
+        }
+
+        return CreateJwtForUserId(user.Id);
     }
 }

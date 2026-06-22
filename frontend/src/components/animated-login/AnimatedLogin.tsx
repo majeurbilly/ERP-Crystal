@@ -11,6 +11,7 @@ import {
 import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
+import { useTranslations } from "../../context/TranslationContext";
 
 const charTransition = { duration: 0.7, ease: "easeInOut" as const };
 
@@ -272,7 +273,6 @@ export default function AnimatedLogin({
 		}
 	}, [isTyping]);
 
-	// Réaction ("toux" / cringe) quand une erreur provient du parent
 	useEffect(() => {
 		if (externalError) {
 			setIsPurpleBlinking(true);
@@ -346,6 +346,8 @@ export default function AnimatedLogin({
 		background:
 			"linear-gradient(to bottom right, rgba(var(--bs-primary-rgb), 0.9), var(--bs-primary), rgba(var(--bs-primary-rgb), 0.85))",
 	};
+
+	const { t } = useTranslations();
 
 	return (
 		<div className="min-vh-100 w-100 row g-0 mx-0">
@@ -700,7 +702,7 @@ export default function AnimatedLogin({
 						href="https://dev.azure.com/csf-dfc/ERP%20simplifi%C3%A9"
 						className="text-white text-opacity-75 text-decoration-none link-light"
 					>
-						Contact
+						{t.auth.contact}
 					</a>
 				</div>
 
@@ -747,16 +749,16 @@ export default function AnimatedLogin({
 						<span>Crystal</span>
 					</div>
 
-					<div className="text-center mb-4 pb-2">
-						<h1 className="h2 fw-bold tracking-tight mb-2">Welcome back!</h1>
+					<div className="text-center mb-4 pb-2 text-dark">
+						<h1 className="h2 fw-bold mb-2">{t.auth.welcomeBack}</h1>
 						<p className="text-secondary small mb-0">
-							Please enter your details
+							{t.auth.enterDetails}
 						</p>
 					</div>
 
 					<Form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
 						<Form.Group controlId="email">
-							<Form.Label className="small fw-medium">Email</Form.Label>
+							<Form.Label className="small fw-medium text-dark text-start">{t.auth.email}</Form.Label>
 							<Form.Control
 								type="email"
 								placeholder="anna@gmail.com"
@@ -772,7 +774,7 @@ export default function AnimatedLogin({
 						</Form.Group>
 
 						<Form.Group controlId="password">
-							<Form.Label className="small fw-medium">Password</Form.Label>
+							<Form.Label className="small fw-medium text-dark text-start">{t.auth.password}</Form.Label>
 							<div className="position-relative">
 								<Form.Control
 									type={showPassword ? "text" : "password"}
@@ -802,17 +804,14 @@ export default function AnimatedLogin({
 							<Form.Check
 								type="checkbox"
 								id="remember"
-								label="Remember for 30 days"
-								className="small user-select-none"
+								label={<span className="small text-dark user-select-none">{t.auth.thirtyDays}</span>}
 							/>
-							{/* ATTENTION ÉQUIPE FRONTEND :
-							 * Utiliser 'href="#"' pour déclencher du JavaScript brise l'accessibilité (a11y) et le routage. Utilisez un <button> stylisé en lien !
-							 */}
+
 							<button
 								type="button"
 								className="btn btn-link p-0 border-0 bg-transparent small text-primary fw-medium text-decoration-none"
 							>
-								Forgot password?
+								{t.auth.forgotPassword}
 							</button>
 						</div>
 
@@ -834,14 +833,12 @@ export default function AnimatedLogin({
 					</Form>
 
 					<p className="text-center text-secondary small mt-4 mb-0">
-						Don&apos;t have an account? {/* ATTENTION ÉQUIPE FRONTEND :
-						 * Utiliser 'href="#"' pour déclencher du JavaScript brise l'accessibilité (a11y) et le routage. Utilisez un <button> stylisé en lien !
-						 */}
+						{t.auth.noAccount}
 						<button
 							type="button"
 							className="btn btn-link p-0 border-0 bg-transparent text-body fw-medium text-decoration-none"
 						>
-							Sign Up
+							{t.auth.signUp}
 						</button>
 					</p>
 				</Container>

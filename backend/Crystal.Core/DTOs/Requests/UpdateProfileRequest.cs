@@ -10,4 +10,7 @@ public class UpdateProfileRequest
 
     [Required]
     public string UserName { get; set; } = string.Empty;
+
+    [MinLength(8)]
+    public string? Password { get; set; }
 }

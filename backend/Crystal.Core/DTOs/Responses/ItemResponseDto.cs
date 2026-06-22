@@ -1,4 +1,6 @@
-﻿namespace Crystal.Core.DTOs.Responses;
+﻿using System.Collections.Generic;
+
+namespace Crystal.Core.DTOs.Responses;
 
 public class ItemResponseDto
 {
@@ -6,6 +8,8 @@ public class ItemResponseDto
 
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Distributor { get; set; }
+    public string? ImageUrl { get; set; }
 
     public decimal Price { get; set; }
 
@@ -17,5 +21,7 @@ public class ItemResponseDto
 
     public DateTime LastUpdate { get; set; }
 
-    public string? BookTitle { get; set; }
+    public bool IsBook { get; set; }
+
+    public bool IsActive { get; set; }
 }

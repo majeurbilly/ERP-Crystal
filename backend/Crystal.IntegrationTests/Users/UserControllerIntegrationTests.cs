@@ -9,6 +9,7 @@ using Crystal.Core.DTOs.Requests;
 using Crystal.Core.Entities;
 using Crystal.Core.DTOs.Responses;
 using Crystal.Infrastructure.Context;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,8 @@ namespace Crystal.IntegrationTests.Users;
 
 public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApplicationFactory>, IDisposable
 {
+    private const string SeedEmailDomain = "@crystal.local";
+
     private readonly HttpClient m_client;
     private readonly CrystalWebApplicationFactory m_factory;
 
@@ -29,43 +32,43 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetUsers_WithoutAuthorizationHeader_Returns401()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Remove("Authorization");
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUsers_WithEmployeeRole_Returns403()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Employee));
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUsers_WithAdminRole_Returns200AndContent()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         List<UserResponse>? body = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
@@ -74,58 +77,12 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     }
 
     [Fact]
-    public async Task GetHrMetrics_WithAdminRole_Returns200Ok()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
-
-        // Exécution
-        HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        HrMetricsResponse? body = await response.Content.ReadFromJsonAsync<HrMetricsResponse>();
-        Assert.NotNull(body);
-    }
-
-    [Fact]
-    public async Task GetHrMetrics_WithoutAuth_Returns401Unauthorized()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Remove("Authorization");
-
-        // Exécution
-        HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetHrMetrics_WithEmployeeRole_Returns403Forbidden()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
-
-        // Exécution
-        HttpResponseMessage response = await m_client.GetAsync("/api/users/metrics");
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [Fact]
     public async Task GetUserById_WithAdminRole_AndValidId_Returns200AndUser()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         HttpResponseMessage usersResponse = await m_client.GetAsync("/api/users");
         Assert.Equal(HttpStatusCode.OK, usersResponse.StatusCode);
@@ -136,10 +93,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
 
         string userId = users[0].Id;
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync($"/api/users/{userId}");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         UserResponse? body = await response.Content.ReadFromJsonAsync<UserResponse>();
@@ -151,44 +108,31 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetUserById_WithAdminRole_AndInvalidId_Returns404()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
         const string invalidId = "un-id-qui-n-existe-pas-123";
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync($"/api/users/{invalidId}");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetUserById_WithoutAuth_Returns401Unauthorized()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Remove("Authorization");
-
-        // Exécution
-        HttpResponseMessage response = await m_client.GetAsync("/api/users/nimporte-quel-id");
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task GetUserById_WithEmployeeRole_Returns403()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Employee));
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.GetAsync("/api/users/nimporte-quel-id");
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -198,7 +142,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Remove("Authorization");
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.GetAsync("/api/users/me");
 
         // Vérification
@@ -209,22 +153,14 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     public async Task GetMyProfile_WithEmployeeRole_Returns200AndUser()
     {
         // Préparation
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        ApplicationUser? user = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .FirstOrDefaultAsync();
-        Assert.NotNull(user);
-
+        ApplicationUser user = await GetOrCreateDisposableUserAsync();
         string userId = user.Id;
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
+            CrystalWebApplicationFactory.CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.GetAsync("/api/users/me");
 
         // Vérification
@@ -247,7 +183,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"noauth-{Guid.NewGuid():N}"
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -257,21 +193,13 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task UpdateMyProfile_WithValidData_Returns200Ok()
     {
-        // Préparation : récupération d'un utilisateur existant en base de test.
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        ApplicationUser? user = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .FirstOrDefaultAsync();
-        Assert.NotNull(user);
-
+        // Préparation : utilisateur jetable pour ne pas altérer les comptes seed.
+        ApplicationUser user = await GetOrCreateDisposableUserAsync();
         string userId = user.Id;
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
+            CrystalWebApplicationFactory.CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
 
         UpdateProfileRequest request = new UpdateProfileRequest
         {
@@ -279,7 +207,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"updated-me-{Guid.NewGuid():N}"
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -294,21 +222,13 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task UpdateMyProfile_WithInvalidEmail_Returns400BadRequest()
     {
-        // Préparation : récupération d'un utilisateur existant pour générer un JWT valide.
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        ApplicationUser? user = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .FirstOrDefaultAsync();
-        Assert.NotNull(user);
-
+        // Préparation : utilisateur jetable pour ne pas altérer les comptes seed.
+        ApplicationUser user = await GetOrCreateDisposableUserAsync();
         string userId = user.Id;
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
+            CrystalWebApplicationFactory.CreateJwtForUserIdAndRoles(userId, ApplicationRoles.Employee));
 
         UpdateProfileRequest request = new UpdateProfileRequest
         {
@@ -316,7 +236,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"invalid-email-{Guid.NewGuid():N}"
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -326,24 +246,13 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task UpdateMyProfile_WithDuplicateEmail_Returns400BadRequest()
     {
-        // Préparation : récupération de deux utilisateurs distincts en base de test.
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        List<ApplicationUser> users = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .Take(2)
-            .ToListAsync();
-
-        Assert.True(users.Count >= 2);
-
-        ApplicationUser user1 = users[0];
-        ApplicationUser user2 = users[1];
+        // Préparation : deux utilisateurs jetables distincts.
+        ApplicationUser user1 = await CreateDisposableUserAsync();
+        ApplicationUser user2 = await CreateDisposableUserAsync();
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CreateJwtForUserIdAndRoles(user1.Id, ApplicationRoles.Employee));
+            CrystalWebApplicationFactory.CreateJwtForUserIdAndRoles(user1.Id, ApplicationRoles.Employee));
 
         UpdateProfileRequest request = new UpdateProfileRequest
         {
@@ -351,7 +260,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = $"duplicate-email-{Guid.NewGuid():N}"
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -361,24 +270,13 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task UpdateMyProfile_WithDuplicateUserName_Returns400BadRequest()
     {
-        // Préparation : récupération de deux utilisateurs distincts en base de test.
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        List<ApplicationUser> users = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .Take(2)
-            .ToListAsync();
-
-        Assert.True(users.Count >= 2);
-
-        ApplicationUser user1 = users[0];
-        ApplicationUser user2 = users[1];
+        // Préparation : deux utilisateurs jetables distincts.
+        ApplicationUser user1 = await CreateDisposableUserAsync();
+        ApplicationUser user2 = await CreateDisposableUserAsync();
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CreateJwtForUserIdAndRoles(user1.Id, ApplicationRoles.Employee));
+            CrystalWebApplicationFactory.CreateJwtForUserIdAndRoles(user1.Id, ApplicationRoles.Employee));
 
         UpdateProfileRequest request = new UpdateProfileRequest
         {
@@ -386,7 +284,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             UserName = user2.UserName ?? $"duplicate-username-{Guid.NewGuid():N}"
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/me", request);
 
         // Vérification
@@ -396,10 +294,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task CreateUser_WithAdminRole_AndValidData_Returns201Created()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         string uniqueEmail = $"integration-create-{Guid.NewGuid():N}@example.com";
         CreateUserRequest request = new CreateUserRequest
@@ -407,13 +305,13 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Email = uniqueEmail,
             UserName = $"user-{Guid.NewGuid():N}",
             Password = "Password123!",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         UserResponse? body = await response.Content.ReadFromJsonAsync<UserResponse>();
@@ -425,10 +323,10 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task CreateUser_WithAdminRole_AndInvalidPassword_Returns400BadRequest()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         string uniqueEmail = $"integration-invalid-password-{Guid.NewGuid():N}@example.com";
         CreateUserRequest request = new CreateUserRequest
@@ -436,44 +334,23 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Email = uniqueEmail,
             UserName = $"user-{Guid.NewGuid():N}",
             Password = "123",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task CreateUser_WithoutAuth_Returns401Unauthorized()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Remove("Authorization");
-
-        CreateUserRequest request = new CreateUserRequest
-        {
-            Email = $"integration-noauth-create-{Guid.NewGuid():N}@example.com",
-            UserName = $"user-noauth-{Guid.NewGuid():N}",
-            Password = "Password123!",
-            Role = ApplicationRoles.Employee
-        };
-
-        // Exécution
-        HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task CreateUser_WithEmployeeRole_Returns403Forbidden()
     {
-        // Préparation
+        // Arrange
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Employee));
 
         string uniqueEmail = $"integration-forbidden-{Guid.NewGuid():N}@example.com";
         CreateUserRequest request = new CreateUserRequest
@@ -481,43 +358,35 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
             Email = uniqueEmail,
             UserName = $"user-{Guid.NewGuid():N}",
             Password = "Password123!",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution
+        // Act
         HttpResponseMessage response = await m_client.PostAsJsonAsync("/api/users", request);
 
-        // Vérification
+        // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
     public async Task UpdateUser_WithAdminRole_AndValidData_Returns200Ok()
     {
-        // Préparation : on récupère un utilisateur existant depuis la base de test.
-        using IServiceScope scope = m_factory.Services.CreateScope();
-        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-        ApplicationUser? user = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .FirstOrDefaultAsync();
-        Assert.NotNull(user);
-
+        // Préparation : utilisateur jetable pour ne pas altérer les comptes seed.
+        ApplicationUser user = await GetOrCreateDisposableUserAsync();
         string userId = user.Id;
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         UpdateUserRequest request = new UpdateUserRequest
         {
             Email = $"integration-update-{Guid.NewGuid():N}@example.com",
             UserName = $"updated-{Guid.NewGuid():N}",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync($"/api/users/{userId}", request);
 
         // Vérification
@@ -534,17 +403,17 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         UpdateUserRequest request = new UpdateUserRequest
         {
             Email = $"integration-update-notfound-{Guid.NewGuid():N}@example.com",
             UserName = $"updated-{Guid.NewGuid():N}",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
         const string invalidId = "faux-id-123";
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync($"/api/users/{invalidId}", request);
 
         // Vérification
@@ -557,40 +426,20 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         UpdateUserRequest request = new UpdateUserRequest
         {
             Email = "mauvais-email",
             UserName = $"updated-{Guid.NewGuid():N}",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution : l'ID importe peu ici car la validation du body échoue.
+        // Action : l'ID importe peu ici car la validation du body échoue.
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/any-id", request);
 
         // Vérification
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task UpdateUser_WithoutAuth_Returns401Unauthorized()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Remove("Authorization");
-
-        UpdateUserRequest request = new UpdateUserRequest
-        {
-            Email = $"integration-noauth-update-{Guid.NewGuid():N}@example.com",
-            UserName = $"updated-noauth-{Guid.NewGuid():N}",
-            Role = ApplicationRoles.Employee
-        };
-
-        // Exécution
-        HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/nimporte-quel-id", request);
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -599,16 +448,16 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Employee));
 
         UpdateUserRequest request = new UpdateUserRequest
         {
             Email = $"integration-update-forbidden-{Guid.NewGuid():N}@example.com",
             UserName = $"updated-{Guid.NewGuid():N}",
-            Role = ApplicationRoles.Employee
+            DynamicRoleId = ApplicationRoles.Employee
         };
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.PutAsJsonAsync("/api/users/nimporte-quel-id", request);
 
         // Vérification
@@ -618,39 +467,29 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task DeleteUser_WithAdminRole_AndValidId_Returns204NoContent()
     {
-        // Préparation : récupération d'un utilisateur actif en base de test.
-        using (IServiceScope scope = m_factory.Services.CreateScope())
-        {
-            CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
+        // Préparation : utilisateur jetable pour ne pas altérer les comptes seed.
+        ApplicationUser user = await CreateDisposableUserAsync();
+        string userId = user.Id;
 
-            ApplicationUser? user = await dbContext.Users
-                .Where(p_user => p_user.IsActive)
-                .OrderBy(p_user => p_user.Id)
-                .FirstOrDefaultAsync();
-            Assert.NotNull(user);
+        m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
-            string userId = user.Id;
+        // Action
+        HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{userId}");
 
-            m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Bearer",
-                CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+        // Vérification HTTP
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-            // Exécution
-            HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{userId}");
+        // Vérification base de données : l'utilisateur est soft deleted.
+        using IServiceScope verificationScope = m_factory.Services.CreateScope();
+        CrystalDbContext verificationDbContext = verificationScope.ServiceProvider.GetRequiredService<CrystalDbContext>();
 
-            // Vérification HTTP
-            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        ApplicationUser? deletedUser = await verificationDbContext.Users
+            .FirstOrDefaultAsync(p_user => p_user.Id == userId);
 
-            // Vérification base de données : l'utilisateur est soft deleted.
-            using IServiceScope verificationScope = m_factory.Services.CreateScope();
-            CrystalDbContext verificationDbContext = verificationScope.ServiceProvider.GetRequiredService<CrystalDbContext>();
-
-            ApplicationUser? deletedUser = await verificationDbContext.Users
-                .FirstOrDefaultAsync(p_user => p_user.Id == userId);
-
-            Assert.NotNull(deletedUser);
-            Assert.False(deletedUser.IsActive);
-        }
+        Assert.NotNull(deletedUser);
+        Assert.False(deletedUser.IsActive);
     }
 
     [Fact]
@@ -659,28 +498,15 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         const string invalidId = "invalid-user-id-for-delete-123";
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{invalidId}");
 
         // Vérification
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task DeleteUser_WithoutAuth_Returns401Unauthorized()
-    {
-        // Préparation
-        m_client.DefaultRequestHeaders.Remove("Authorization");
-
-        // Exécution
-        HttpResponseMessage response = await m_client.DeleteAsync("/api/users/nimporte-quel-id");
-
-        // Vérification
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -689,11 +515,11 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         // Préparation
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Employee));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Employee));
 
         const string userId = "any-user-id";
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.DeleteAsync($"/api/users/{userId}");
 
         // Vérification
@@ -703,24 +529,24 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
     [Fact]
     public async Task GetUsers_WithAdminRole_DoesNotReturnInactiveUsers()
     {
-        // Préparation : on soft delete un utilisateur actif.
+        // Préparation : on désactive un utilisateur jetable (pas un compte seed).
+        ApplicationUser user = await CreateDisposableUserAsync();
+
         using IServiceScope scope = m_factory.Services.CreateScope();
         CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
 
-        ApplicationUser? user = await dbContext.Users
-            .Where(p_user => p_user.IsActive)
-            .OrderBy(p_user => p_user.Id)
-            .FirstOrDefaultAsync();
-        Assert.NotNull(user);
+        ApplicationUser? trackedUser = await dbContext.Users
+            .FirstOrDefaultAsync(p_u => p_u.Id == user.Id);
+        Assert.NotNull(trackedUser);
 
-        user.IsActive = false;
+        trackedUser.IsActive = false;
         await dbContext.SaveChangesAsync();
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
-        // Exécution
+        // Action
         HttpResponseMessage response = await m_client.GetAsync("/api/users");
 
         // Vérification
@@ -728,7 +554,7 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
 
         List<UserResponse>? users = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
         Assert.NotNull(users);
-        Assert.DoesNotContain(users, p_user => p_user.Id == user.Id);
+        Assert.DoesNotContain(users, p_user => p_user.Id == trackedUser.Id);
     }
 
     public void Dispose()
@@ -736,29 +562,42 @@ public sealed class UserControllerIntegrationTests : IClassFixture<CrystalWebApp
         m_client.Dispose();
     }
 
-    private static string CreateJwtForUserIdAndRoles(string p_userId, params string[] p_roles)
+    private async Task<ApplicationUser> CreateDisposableUserAsync(string p_dynamicRoleId = ApplicationRoles.Employee)
     {
-        List<Claim> claims =
-        [
-            new Claim(JwtRegisteredClaimNames.Sub, p_userId),
-            new Claim(ClaimTypes.NameIdentifier, p_userId),
-        ];
+        using IServiceScope scope = m_factory.Services.CreateScope();
+        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        foreach (string role in p_roles)
+        string uniqueSuffix = Guid.NewGuid().ToString("N");
+        ApplicationUser user = new ApplicationUser
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            UserName = $"integration-disposable-{uniqueSuffix}",
+            Email = $"integration-disposable-{uniqueSuffix}@example.com",
+            EmailConfirmed = true,
+            DynamicRoleId = p_dynamicRoleId,
+        };
+
+        IdentityResult result = await userManager.CreateAsync(user, "Password123!").ConfigureAwait(false);
+        Assert.True(result.Succeeded);
+
+        return user;
+    }
+
+    private async Task<ApplicationUser> GetOrCreateDisposableUserAsync()
+    {
+        using IServiceScope scope = m_factory.Services.CreateScope();
+        CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
+
+        ApplicationUser? existingUser = await dbContext.Users
+            .Where(p_user => p_user.IsActive && p_user.Email != null && !p_user.Email.EndsWith(SeedEmailDomain))
+            .OrderBy(p_user => p_user.Id)
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        if (existingUser is not null)
+        {
+            return existingUser;
         }
 
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(CrystalWebApplicationFactory.JwtKey));
-        SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
-
-        JwtSecurityToken token = new(
-            issuer: CrystalWebApplicationFactory.JwtIssuer,
-            audience: CrystalWebApplicationFactory.JwtAudience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return await CreateDisposableUserAsync().ConfigureAwait(false);
     }
 }

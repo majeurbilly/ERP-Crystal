@@ -1,21 +1,17 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Crystal.Core.DTOs.Requests;
-
-public class CreateItemRequest
+namespace Crystal.Core.DTOs.Requests
 {
-    [Required]
-    public string Name { get; set; } = string.Empty;
-
-    public string? Description { get; set; }
-
-    [Required]
-    [Range(0.01, double.MaxValue)]
-    public decimal Price { get; set; }
-
-    public int AlertQuantity { get; set; }
-
-    public int? BookId { get; set; }
-
-    public int InitialQuantity { get; set; } = 0;
+    public class CreateItemRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Distributor { get; set; }
+        public decimal Price { get; set; }
+        public int AlertQuantity { get; set; }
+    }
 }

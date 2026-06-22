@@ -16,5 +16,5 @@ public class CreateUserRequest
     public string Password { get; set; } = string.Empty;
 
     [Required]
-    public string Role { get; set; } = string.Empty;
+    public string DynamicRoleId { get; set; } = string.Empty;
 }

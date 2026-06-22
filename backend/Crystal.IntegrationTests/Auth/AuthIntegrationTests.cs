@@ -26,14 +26,14 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
     [Fact]
     public async Task Register_Then_Login_Returns_A_Cryptographically_Valid_JWT()
     {
-        // Préparation
+        // arrange
         const string userName = "integration_user";
         const string email = "integration@test.local";
         const string password = "ValidPass1!a";
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         HttpResponseMessage registerResponse = await m_client.PostAsJsonAsync(
             "/api/auth/register",
@@ -42,14 +42,14 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
                 UserName = userName,
                 Email = email,
                 Password = password,
-                Role = ApplicationRoles.Employee
+                DynamicRoleId = ApplicationRoles.Employee
             });
 
         m_client.DefaultRequestHeaders.Remove("Authorization");
 
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
-        // Exécution
+        // act
         HttpResponseMessage loginResponse = await m_client.PostAsJsonAsync(
             "/api/auth/login",
             new LoginRequest
@@ -60,7 +60,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
 
-        // Vérification
+        // assert
         LoginResponse? body = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(body);
@@ -87,13 +87,13 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         Assert.Equal(CrystalWebApplicationFactory.JwtIssuer, jwt.Issuer);
 
-        Assert.Contains(jwt.Audiences, a => a == CrystalWebApplicationFactory.JwtAudience);
+        Assert.Contains(jwt.Audiences, p_a => p_a == CrystalWebApplicationFactory.JwtAudience);
 
         string? sub = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         Assert.Equal(body.UserId, sub);
 
-        Assert.Contains(principal.Claims, c => c.Type == ClaimTypes.Role && c.Value == ApplicationRoles.Employee);
+        Assert.DoesNotContain(principal.Claims, p_c => p_c.Type == ClaimTypes.Role);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         HttpResponseMessage firstRegisterResponse = await m_client.PostAsJsonAsync(
             "/api/auth/register",
@@ -127,7 +127,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
                 UserName = $"integration_user_{stamp}_1",
                 Email = email,
                 Password = "ValidPass1!a",
-                Role = ApplicationRoles.Employee
+                DynamicRoleId = ApplicationRoles.Employee
             });
 
         Assert.Equal(HttpStatusCode.OK, firstRegisterResponse.StatusCode);
@@ -139,7 +139,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
                 UserName = $"integration_user_{stamp}_2",
                 Email = email,
                 Password = "ValidPass1!a",
-                Role = ApplicationRoles.Employee
+                DynamicRoleId = ApplicationRoles.Employee
             });
 
         Assert.Equal(HttpStatusCode.BadRequest, secondRegisterResponse.StatusCode);
@@ -154,7 +154,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
 
         m_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            CrystalWebApplicationFactory.CreateJwtForRoles(ApplicationRoles.Admin));
+            await m_factory.CreateJwtForSeededRoleAsync(ApplicationRoles.Admin));
 
         HttpResponseMessage registerResponse = await m_client.PostAsJsonAsync(
             "/api/auth/register",
@@ -163,7 +163,7 @@ public sealed class AuthIntegrationTests : IClassFixture<CrystalWebApplicationFa
                 UserName = $"integration_user_{stamp}",
                 Email = $"integration_{stamp}@test.local",
                 Password = "123",
-                Role = ApplicationRoles.Employee
+                DynamicRoleId = ApplicationRoles.Employee
             });
 
         Assert.Equal(HttpStatusCode.BadRequest, registerResponse.StatusCode);

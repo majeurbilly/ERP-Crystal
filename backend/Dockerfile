@@ -19,13 +19,15 @@ RUN dotnet publish Crystal.API.csproj -c Release -o /app/publish /p:UseAppHost=f
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 
-USER app
-
 COPY --from=build /app/publish .
+
+# Dossier d'upload writable par l'utilisateur non-root du conteneur
+RUN mkdir -p wwwroot/images/items \
+    && chown -R app:app /app
+
+USER app
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
-
-# ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "Crystal.API.dll"]

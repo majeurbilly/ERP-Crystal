@@ -14,9 +14,7 @@
 		"verbatimModuleSyntax": true,
 		"moduleDetection": "force",
 		"noEmit": true,
-		// "baseUrl": ".",
 		"paths": {
-			// "@/*": ["./src/*"],
 			"jwt-decode": ["./src/shims/jwt-decode.ts"]
 		},
 		"jsx": "react-jsx",
@@ -28,8 +26,6 @@
 		"erasableSyntaxOnly": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true
-		//fix possiblement temporaire
-		// "ignoreDeprecations": "6.0"
 	},
 	"include": ["src"]
 }

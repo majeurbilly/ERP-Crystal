@@ -1,7 +1,8 @@
-﻿using Crystal.Core;
+﻿using Crystal.Core.Constants;
 using Crystal.Core.DTOs.Requests;
 using Crystal.Core.DTOs.Responses;
 using Crystal.Core.Entities;
+using Crystal.Core.Interfaces.Repositories;
 using Crystal.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -17,15 +18,18 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> m_userManager;
     private readonly SignInManager<ApplicationUser> m_signInManager;
     private readonly IConfiguration m_configuration;
+    private readonly IDynamicRoleRepository m_dynamicRoleRepository;
 
     public AuthService(
         UserManager<ApplicationUser> p_userManager,
         SignInManager<ApplicationUser> p_signInManager,
-        IConfiguration p_configuration)
+        IConfiguration p_configuration,
+        IDynamicRoleRepository p_dynamicRoleRepository)
     {
         m_userManager = p_userManager;
         m_signInManager = p_signInManager;
         m_configuration = p_configuration;
+        m_dynamicRoleRepository = p_dynamicRoleRepository;
     }
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest p_request, CancellationToken p_cancellationToken = default)
@@ -47,33 +51,43 @@ public class AuthService : IAuthService
             return null;
         }
 
-        IList<string> roles = await m_userManager.GetRolesAsync(user).ConfigureAwait(false);
-        string token = CreateJwtToken(user, roles);
+        string token = CreateJwtToken(user);
 
         return new LoginResponse
         {
             Token = token,
             UserId = user.Id,
             UserName = user.UserName ?? user.Email ?? string.Empty,
-            Roles = roles.ToList()
+            DynamicRoleId = user.DynamicRoleId,
         };
     }
 
     public async Task<RegisterResult> RegisterAsync(RegisterRequest p_request, CancellationToken p_cancellationToken = default)
     {
-        if (!ApplicationRoles.All.Contains(p_request.Role))
+        if (string.IsNullOrWhiteSpace(p_request.DynamicRoleId))
         {
             return new RegisterResult
             {
                 Succeeded = false,
-                Errors = new[] { $"Role must be one of: {string.Join(", ", ApplicationRoles.All)}." }
+                Errors = new[] { ErrorMessages.User.RoleRequired }
+            };
+        }
+
+        bool roleExists = await m_dynamicRoleRepository.ExistsAsync(p_request.DynamicRoleId).ConfigureAwait(false);
+        if (!roleExists)
+        {
+            return new RegisterResult
+            {
+                Succeeded = false,
+                Errors = new[] { ErrorMessages.User.RoleNotFound }
             };
         }
 
         ApplicationUser user = new()
         {
             UserName = p_request.UserName,
-            Email = p_request.Email
+            Email = p_request.Email,
+            DynamicRoleId = p_request.DynamicRoleId,
         };
 
         IdentityResult createResult = await m_userManager.CreateAsync(user, p_request.Password).ConfigureAwait(false);
@@ -82,28 +96,17 @@ public class AuthService : IAuthService
             return new RegisterResult
             {
                 Succeeded = false,
-                Errors = createResult.Errors.Select(e => e.Description).ToList()
-            };
-        }
-
-        IdentityResult roleResult = await m_userManager.AddToRoleAsync(user, p_request.Role).ConfigureAwait(false);
-        if (!roleResult.Succeeded)
-        {
-            await m_userManager.DeleteAsync(user).ConfigureAwait(false);
-            return new RegisterResult
-            {
-                Succeeded = false,
-                Errors = roleResult.Errors.Select(e => e.Description).ToList()
+                Errors = createResult.Errors.Select(p_e => p_e.Description).ToList()
             };
         }
 
         return new RegisterResult { Succeeded = true };
     }
 
-    private string CreateJwtToken(ApplicationUser p_user, IList<string> p_roles)
+    private string CreateJwtToken(ApplicationUser p_user)
     {
         IConfigurationSection jwtSettings = m_configuration.GetRequiredSection("Jwt");
-        string key = jwtSettings["Key"] ?? throw new InvalidOperationException("Configuration Jwt:Key manquante.");
+        string key = jwtSettings["Key"] ?? throw new InvalidOperationException(ErrorMessages.Auth.JwtKeyMissing);
         string? issuer = jwtSettings["Issuer"];
         string? audience = jwtSettings["Audience"];
 
@@ -122,11 +125,6 @@ public class AuthService : IAuthService
         {
             claims.Add(new Claim(JwtRegisteredClaimNames.Email, p_user.Email));
             claims.Add(new Claim(ClaimTypes.Email, p_user.Email));
-        }
-
-        foreach (string role in p_roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
         JwtSecurityToken token = new(

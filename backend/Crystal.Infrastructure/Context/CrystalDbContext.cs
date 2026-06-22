@@ -1,7 +1,7 @@
-﻿using Crystal.Core.Entities;
+using Crystal.Core.Entities;
+using Crystal.Infrastructure.Data.Configurations;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
 namespace Crystal.Infrastructure.Context;
 
 public class CrystalDbContext : IdentityDbContext<ApplicationUser>
@@ -11,11 +11,15 @@ public class CrystalDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
-    public DbSet<Employee> Employees => Set<Employee>();
-    public DbSet<EmployeeRole> EmployeeRoles => Set<EmployeeRole>();
-    public DbSet<Position> Positions => Set<Position>();
-    public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
-    public DbSet<Punch> Punches => Set<Punch>();
+    public DbSet<EmployeeProfile> EmployeeProfiles => Set<EmployeeProfile>();
+    public DbSet<JobPosition> JobPositions => Set<JobPosition>();
+    public DbSet<ScheduledShift> ScheduledShifts => Set<ScheduledShift>();
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+    public DbSet<Timesheet> Timesheets => Set<Timesheet>();
+    public DbSet<EmploymentContract> EmploymentContracts => Set<EmploymentContract>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<PayPeriod> PayPeriods => Set<PayPeriod>();
+    public DbSet<PayStub> PayStubs => Set<PayStub>();
     public DbSet<Availability> Availabilities => Set<Availability>();
 
     public DbSet<Item> Items => Set<Item>();
@@ -33,46 +37,63 @@ public class CrystalDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Receipt> Receipts => Set<Receipt>();
 
+    public DbSet<DynamicRole> DynamicRoles => Set<DynamicRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<RolePermissionLocation> RolePermissionLocations => Set<RolePermissionLocation>();
+
     protected override void OnModelCreating(ModelBuilder p_modelBuilder)
     {
         base.OnModelCreating(p_modelBuilder);
 
+        p_modelBuilder.ApplyConfiguration(new EmployeeProfileConfiguration());
+        p_modelBuilder.ApplyConfiguration(new JobPositionConfiguration());
+        p_modelBuilder.ApplyConfiguration(new ScheduledShiftConfiguration());
+        p_modelBuilder.ApplyConfiguration(new TimeEntryConfiguration());
+        p_modelBuilder.ApplyConfiguration(new TimesheetConfiguration());
+        p_modelBuilder.ApplyConfiguration(new EmploymentContractConfiguration());
+        p_modelBuilder.ApplyConfiguration(new LeaveRequestConfiguration());
+        p_modelBuilder.ApplyConfiguration(new PayPeriodConfiguration());
+        p_modelBuilder.ApplyConfiguration(new PayStubConfiguration());
+
+        p_modelBuilder.ApplyConfigurationsFromAssembly(typeof(CrystalDbContext).Assembly);
+
         p_modelBuilder.Entity<AuthorBook>()
-            .HasKey(x => new { x.AuthorId, x.BookId });
+            .HasKey(p_x => new { p_x.AuthorId, p_x.BookId });
 
         p_modelBuilder.Entity<BookCategory>()
-            .HasKey(x => new { x.BookId, x.CategoryId });
+            .HasKey(p_x => new { p_x.BookId, p_x.CategoryId });
 
         p_modelBuilder.Entity<BookPublisher>()
-            .HasKey(x => new { x.BookId, x.PublisherId });
+            .HasKey(p_x => new { p_x.BookId, p_x.PublisherId });
 
         p_modelBuilder.Entity<Book>()
-            .HasOne(x => x.Item)
-            .WithOne(x => x.Book)
-            .HasForeignKey<Book>(x => x.ItemId);
+            .HasOne(p_x => p_x.Item)
+            .WithOne(p_x => p_x.Book)
+            .HasForeignKey<Book>(p_x => p_x.ItemId);
 
         p_modelBuilder.Entity<InventoryLine>()
-            .HasOne(x => x.Item)
-            .WithMany(x => x.InventoryLines)
-            .HasForeignKey(x => x.ItemId);
+            .HasOne(p_x => p_x.Item)
+            .WithMany(p_x => p_x.InventoryLines)
+            .HasForeignKey(p_x => p_x.ItemId);
 
         p_modelBuilder.Entity<InventoryLine>()
-            .HasOne(x => x.Location)
-            .WithMany(x => x.InventoryLines)
-            .HasForeignKey(x => x.LocationId);
+            .HasOne(p_line => p_line.Location)
+            .WithMany(p_location => p_location.InventoryLines)
+            .HasForeignKey(p_line => p_line.LocationId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        p_modelBuilder.Entity<Receipt>()
-            .HasOne(x => x.Client)
-            .WithMany(x => x.Receipts)
-            .HasForeignKey(x => x.ClientId);
-
-        p_modelBuilder.Entity<Receipt>()
-            .HasOne(x => x.Item)
-            .WithMany(x => x.Receipts)
-            .HasForeignKey(x => x.ItemId);
-
-        p_modelBuilder.Entity<Employee>()
-            .HasIndex(x => x.Email)
+        p_modelBuilder.Entity<InventoryLine>()
+            .HasIndex(p_x => new { p_x.ItemId, p_x.LocationId })
             .IsUnique();
+
+        p_modelBuilder.Entity<Receipt>()
+            .HasOne(p_x => p_x.Client)
+            .WithMany(p_x => p_x.Receipts)
+            .HasForeignKey(p_x => p_x.ClientId);
+
+        p_modelBuilder.Entity<Receipt>()
+            .HasOne(p_x => p_x.Item)
+            .WithMany(p_x => p_x.Receipts)
+            .HasForeignKey(p_x => p_x.ItemId);
     }
 }

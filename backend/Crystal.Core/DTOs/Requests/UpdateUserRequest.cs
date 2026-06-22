@@ -12,5 +12,8 @@ public class UpdateUserRequest
     public string UserName { get; set; } = string.Empty;
 
     [Required]
-    public string Role { get; set; } = string.Empty;
+    public string DynamicRoleId { get; set; } = string.Empty;
+
+    [MinLength(8)]
+    public string? Password { get; set; }
 }

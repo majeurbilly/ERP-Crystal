@@ -21,3 +21,6 @@ obj/
 .vs/
 **/bin/
 **/obj/
+
+# Migrations Entity Framework (générées localement)
+Crystal.Infrastructure/Migrations/

@@ -1,7 +1,10 @@
+using Crystal.Core.Authorization;
 using Crystal.Core.DTOs.Requests;
 using Crystal.Core.DTOs.Responses;
 using Crystal.Core.Interfaces.Services;
+using Crystal.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crystal.API.Controllers;
@@ -16,17 +19,55 @@ public class ItemController : ControllerBase
     public ItemController(IItemService p_itemService) => m_itemService = p_itemService;
 
     [HttpGet]
-    public async Task<IActionResult> GetItems(CancellationToken p_cancellationToken)
+    [RequirePermission(PermissionActions.Read, PermissionSubjects.Item)]
+    public async Task<IActionResult> GetInventory(
+        [FromQuery] string? p_search = null,
+        [FromQuery] int? p_publisherId = null,
+        [FromQuery] int[]? p_categoryIds = null,
+        [FromQuery] int? p_authorId = null,
+        [FromQuery] bool? p_isBook = null)
     {
-        IEnumerable<ItemResponse> items = await m_itemService.GetAllItemsAsync(p_cancellationToken);
+        IEnumerable<ItemResponseDto> items = await m_itemService.GetInventoryAsync(
+            p_search,
+            p_publisherId,
+            p_categoryIds,
+            p_authorId,
+            p_isBook);
+
         return Ok(items);
     }
 
     [HttpGet("{p_id:int}")]
-    public async Task<IActionResult> GetItemById(int p_id, CancellationToken p_cancellationToken)
+    [RequirePermission(PermissionActions.Read, PermissionSubjects.Item)]
+    public async Task<IActionResult> GetItemById(int p_id)
     {
-        ItemResponse? item = await m_itemService.GetItemByIdAsync(p_id, p_cancellationToken);
-        if (item == null)
+        ItemResponseDto? item = await m_itemService.GetByIdAsync(p_id);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpPost]
+    [RequirePermission(PermissionActions.Create, PermissionSubjects.Item)]
+    public async Task<IActionResult> Create([FromBody] CreateItemRequest p_request)
+    {
+        ItemResponseDto item = await m_itemService.CreateAsync(p_request);
+        return StatusCode(StatusCodes.Status201Created, item);
+    }
+
+    [HttpPost("books")]
+    [RequirePermission(PermissionActions.Create, PermissionSubjects.Item)]
+    public async Task<IActionResult> CreateBook([FromBody] CreateBookRequest p_request)
+    {
+        ItemResponseDto item = await m_itemService.CreateBookAsync(p_request);
+        return StatusCode(StatusCodes.Status201Created, item);
+    }
+
+    [HttpPut("{p_id:int}")]
+    [RequirePermission(PermissionActions.Update, PermissionSubjects.Item)]
+    public async Task<IActionResult> Update(int p_id, [FromBody] UpdateItemRequest p_request)
+    {
+        ItemResponseDto? item = await m_itemService.UpdateAsync(p_id, p_request);
+
+        if (item is null)
         {
             return NotFound();
         }
@@ -34,37 +75,34 @@ public class ItemController : ControllerBase
         return Ok(item);
     }
 
-    [HttpPost]
-    [Authorize(Roles = "Admin,Gerant")]
-    public async Task<IActionResult> CreateItem([FromBody] CreateItemRequest p_request, CancellationToken p_cancellationToken)
-    {
-        ItemResponse newItem = await m_itemService.CreateItemAsync(p_request, p_cancellationToken);
-        return CreatedAtAction(nameof(GetItemById), new { p_id = newItem.Id }, newItem);
-    }
-
-    [HttpPut("{p_id:int}")]
-    [Authorize(Roles = "Admin,Gerant")]
-    public async Task<IActionResult> UpdateItem(int p_id, [FromBody] UpdateItemRequest p_request, CancellationToken p_cancellationToken)
-    {
-        ItemResponse? updatedItem = await m_itemService.UpdateItemAsync(p_id, p_request, p_cancellationToken);
-        if (updatedItem == null)
-        {
-            return NotFound();
-        }
-
-        return Ok(updatedItem);
-    }
-
     [HttpDelete("{p_id:int}")]
-    [Authorize(Roles = "Admin,Gerant")]
-    public async Task<IActionResult> DeleteItem(int p_id, CancellationToken p_cancellationToken)
+    [RequirePermission(PermissionActions.Delete, PermissionSubjects.Item)]
+    public async Task<IActionResult> Delete(int p_id)
     {
-        bool isDeleted = await m_itemService.DeleteItemAsync(p_id, p_cancellationToken);
-        if (!isDeleted)
+        bool deleted = await m_itemService.DeleteAsync(p_id);
+
+        if (!deleted)
         {
             return NotFound();
         }
 
         return NoContent();
+    }
+
+    [HttpPost("{p_id:int}/image")]
+    [Consumes("multipart/form-data")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [RequirePermission(PermissionActions.Update, PermissionSubjects.Item)]
+    public async Task<IActionResult> UploadImage(int p_id, [FromForm] IFormFile? p_file)
+    {
+        if (p_file is null || p_file.Length == 0)
+        {
+            return BadRequest(new { message = "Le fichier image est requis." });
+        }
+
+        await using Stream stream = p_file.OpenReadStream();
+        ItemResponseDto? item = await m_itemService.UploadImageAsync(p_id, stream, p_file.FileName);
+
+        return item is null ? NotFound() : Ok(item);
     }
 }

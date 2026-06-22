@@ -34,11 +34,18 @@ namespace Crystal.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
+                    b.Property<string>("DynamicRoleId")
+                        .IsRequired()
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("LockoutEnabled")
@@ -75,6 +82,8 @@ namespace Crystal.Infrastructure.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DynamicRoleId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -129,7 +138,7 @@ namespace Crystal.Infrastructure.Migrations
                     b.Property<DateOnly>("AvailabilityDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("EmployeeId")
+                    b.Property<int>("EmployeeProfileId")
                         .HasColumnType("integer");
 
                     b.Property<DateOnly?>("EndDate")
@@ -152,29 +161,24 @@ namespace Crystal.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("EmployeeProfileId");
 
                     b.ToTable("Availabilities");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Book", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("ItemId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Isbn")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateOnly>("PublicationDate")
                         .HasColumnType("date");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("ItemId")
-                        .IsUnique();
+                    b.HasKey("ItemId");
 
                     b.ToTable("Books");
                 });
@@ -217,11 +221,21 @@ namespace Crystal.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Categories");
                 });
@@ -274,7 +288,28 @@ namespace Crystal.Infrastructure.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Employee", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.DynamicRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsPreset")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DynamicRoles");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.EmployeeProfile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -282,25 +317,36 @@ namespace Crystal.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateOnly>("HiringDate")
                         .HasColumnType("date");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<int>("PositionId")
+                    b.Property<int?>("LocationId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("RoleId")
+                    b.Property<int>("PositionId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Salary")
@@ -308,21 +354,27 @@ namespace Crystal.Infrastructure.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique()
+                        .HasFilter("\"ApplicationUserId\" IS NOT NULL AND \"IsDeleted\" = false");
+
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("PositionId");
 
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("Employees");
+                    b.ToTable("EmployeeProfiles");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.EmployeeRole", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.EmploymentContract", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -330,13 +382,40 @@ namespace Crystal.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
+                    b.Property<decimal>("BaseRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ContractType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("EmployeeProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("WageType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmployeeRoles");
+                    b.HasIndex("EmployeeProfileId", "StartDate")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("EmploymentContracts");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.InventoryLine", b =>
@@ -358,9 +437,10 @@ namespace Crystal.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemId");
-
                     b.HasIndex("LocationId");
+
+                    b.HasIndex("ItemId", "LocationId")
+                        .IsUnique();
 
                     b.ToTable("InventoryLines");
                 });
@@ -377,6 +457,12 @@ namespace Crystal.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Distributor")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
@@ -397,6 +483,89 @@ namespace Crystal.Infrastructure.Migrations
                     b.ToTable("Items");
                 });
 
+            modelBuilder.Entity("Crystal.Core.Entities.JobPosition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#3B82F6");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("JobPositions");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.LeaveRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LeaveType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeProfileId", "StartDate", "EndDate")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("LeaveRequests");
+                });
+
             modelBuilder.Entity("Crystal.Core.Entities.Location", b =>
                 {
                     b.Property<int>("Id")
@@ -407,22 +576,28 @@ namespace Crystal.Infrastructure.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Title")
+                        .IsUnique();
 
                     b.ToTable("Locations");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Position", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.PayPeriod", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -430,20 +605,69 @@ namespace Crystal.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
-                    b.Property<decimal>("MinimumSalary")
-                        .HasColumnType("numeric");
+                    b.Property<bool>("IsProcessed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Positions");
+                    b.HasIndex("StartDate", "EndDate");
+
+                    b.ToTable("PayPeriods");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.PayStub", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("GrossPay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("PayPeriodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimesheetId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalHours")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeProfileId");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.HasIndex("PayPeriodId", "EmployeeProfileId")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("PayStubs");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Publisher", b =>
@@ -461,38 +685,6 @@ namespace Crystal.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Publishers");
-                });
-
-            modelBuilder.Entity("Crystal.Core.Entities.Punch", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("integer");
-
-                    b.Property<TimeOnly?>("EndTime")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<int>("WorkShiftId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("WorkShiftId");
-
-                    b.ToTable("Punches");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Receipt", b =>
@@ -524,7 +716,56 @@ namespace Crystal.Infrastructure.Migrations
                     b.ToTable("Receipts");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.WorkShift", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("DynamicRoleId")
+                        .IsRequired()
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("LocationScope")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DynamicRoleId", "Action", "Subject")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.RolePermissionLocation", b =>
+                {
+                    b.Property<int>("RolePermissionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RolePermissionId", "LocationId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("RolePermissionLocations");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.ScheduledShift", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -535,13 +776,21 @@ namespace Crystal.Infrastructure.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
-                    b.Property<int>("EmployeeId")
+                    b.Property<int?>("EmployeeProfileId")
                         .HasColumnType("integer");
 
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<int>("PositionId")
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("JobPositionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LocationId")
                         .HasColumnType("integer");
 
                     b.Property<TimeOnly>("StartTime")
@@ -549,11 +798,95 @@ namespace Crystal.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("EmployeeProfileId");
 
-                    b.HasIndex("PositionId");
+                    b.HasIndex("JobPositionId");
 
-                    b.ToTable("WorkShifts");
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("ScheduledShifts");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.TimeEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("EmployeeProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly?>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("ScheduledShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int?>("TimesheetId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeProfileId");
+
+                    b.HasIndex("ScheduledShiftId");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.ToTable("TimeEntries");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.Timesheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPaid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeProfileId", "PeriodStart", "PeriodEnd")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("Timesheets");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -688,6 +1021,17 @@ namespace Crystal.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Crystal.Core.Entities.ApplicationUser", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.DynamicRole", "DynamicRole")
+                        .WithMany("Users")
+                        .HasForeignKey("DynamicRoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DynamicRole");
+                });
+
             modelBuilder.Entity("Crystal.Core.Entities.AuthorBook", b =>
                 {
                     b.HasOne("Crystal.Core.Entities.Author", "Author")
@@ -709,13 +1053,13 @@ namespace Crystal.Infrastructure.Migrations
 
             modelBuilder.Entity("Crystal.Core.Entities.Availability", b =>
                 {
-                    b.HasOne("Crystal.Core.Entities.Employee", "Employee")
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
                         .WithMany("Availabilities")
-                        .HasForeignKey("EmployeeId")
+                        .HasForeignKey("EmployeeProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.Navigation("EmployeeProfile");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Book", b =>
@@ -767,23 +1111,40 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("Publisher");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Employee", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.EmployeeProfile", b =>
                 {
-                    b.HasOne("Crystal.Core.Entities.Position", "Position")
-                        .WithMany("Employees")
+                    b.HasOne("Crystal.Core.Entities.ApplicationUser", "ApplicationUser")
+                        .WithOne("EmployeeProfile")
+                        .HasForeignKey("Crystal.Core.Entities.EmployeeProfile", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Crystal.Core.Entities.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Crystal.Core.Entities.JobPosition", "JobPosition")
+                        .WithMany("EmployeeProfiles")
                         .HasForeignKey("PositionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Crystal.Core.Entities.EmployeeRole", "Role")
-                        .WithMany("Employees")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("JobPosition");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.EmploymentContract", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("EmploymentContracts")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Position");
-
-                    b.Navigation("Role");
+                    b.Navigation("EmployeeProfile");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.InventoryLine", b =>
@@ -797,7 +1158,7 @@ namespace Crystal.Infrastructure.Migrations
                     b.HasOne("Crystal.Core.Entities.Location", "Location")
                         .WithMany("InventoryLines")
                         .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Item");
@@ -805,23 +1166,41 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("Location");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Punch", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.LeaveRequest", b =>
                 {
-                    b.HasOne("Crystal.Core.Entities.Employee", "Employee")
-                        .WithMany("Punches")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("LeaveRequests")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Crystal.Core.Entities.WorkShift", "WorkShift")
-                        .WithMany("Punches")
-                        .HasForeignKey("WorkShiftId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.Navigation("EmployeeProfile");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.PayStub", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("PayStubs")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.HasOne("Crystal.Core.Entities.PayPeriod", "PayPeriod")
+                        .WithMany("PayStubs")
+                        .HasForeignKey("PayPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("WorkShift");
+                    b.HasOne("Crystal.Core.Entities.Timesheet", "Timesheet")
+                        .WithMany()
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EmployeeProfile");
+
+                    b.Navigation("PayPeriod");
+
+                    b.Navigation("Timesheet");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Receipt", b =>
@@ -843,23 +1222,95 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.WorkShift", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.RolePermission", b =>
                 {
-                    b.HasOne("Crystal.Core.Entities.Employee", "Employee")
-                        .WithMany("WorkShifts")
-                        .HasForeignKey("EmployeeId")
+                    b.HasOne("Crystal.Core.Entities.DynamicRole", "DynamicRole")
+                        .WithMany("Permissions")
+                        .HasForeignKey("DynamicRoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Crystal.Core.Entities.Position", "Position")
-                        .WithMany("WorkShifts")
-                        .HasForeignKey("PositionId")
+                    b.Navigation("DynamicRole");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.RolePermissionLocation", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Crystal.Core.Entities.RolePermission", "RolePermission")
+                        .WithMany("ScopedLocations")
+                        .HasForeignKey("RolePermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.Navigation("Location");
 
-                    b.Navigation("Position");
+                    b.Navigation("RolePermission");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.ScheduledShift", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("ScheduledShifts")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Crystal.Core.Entities.JobPosition", "JobPosition")
+                        .WithMany("ScheduledShifts")
+                        .HasForeignKey("JobPositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Crystal.Core.Entities.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EmployeeProfile");
+
+                    b.Navigation("JobPosition");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.TimeEntry", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("TimeEntries")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Crystal.Core.Entities.ScheduledShift", "ScheduledShift")
+                        .WithMany("TimeEntries")
+                        .HasForeignKey("ScheduledShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Crystal.Core.Entities.Timesheet", "Timesheet")
+                        .WithMany("TimeEntries")
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EmployeeProfile");
+
+                    b.Navigation("ScheduledShift");
+
+                    b.Navigation("Timesheet");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.Timesheet", b =>
+                {
+                    b.HasOne("Crystal.Core.Entities.EmployeeProfile", "EmployeeProfile")
+                        .WithMany("Timesheets")
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EmployeeProfile");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -913,6 +1364,11 @@ namespace Crystal.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Crystal.Core.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("EmployeeProfile");
+                });
+
             modelBuilder.Entity("Crystal.Core.Entities.Author", b =>
                 {
                     b.Navigation("AuthorBooks");
@@ -937,18 +1393,28 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("Receipts");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Employee", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.DynamicRole", b =>
+                {
+                    b.Navigation("Permissions");
+
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.EmployeeProfile", b =>
                 {
                     b.Navigation("Availabilities");
 
-                    b.Navigation("Punches");
+                    b.Navigation("EmploymentContracts");
 
-                    b.Navigation("WorkShifts");
-                });
+                    b.Navigation("LeaveRequests");
 
-            modelBuilder.Entity("Crystal.Core.Entities.EmployeeRole", b =>
-                {
-                    b.Navigation("Employees");
+                    b.Navigation("PayStubs");
+
+                    b.Navigation("ScheduledShifts");
+
+                    b.Navigation("TimeEntries");
+
+                    b.Navigation("Timesheets");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Item", b =>
@@ -960,16 +1426,21 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("Receipts");
                 });
 
+            modelBuilder.Entity("Crystal.Core.Entities.JobPosition", b =>
+                {
+                    b.Navigation("EmployeeProfiles");
+
+                    b.Navigation("ScheduledShifts");
+                });
+
             modelBuilder.Entity("Crystal.Core.Entities.Location", b =>
                 {
                     b.Navigation("InventoryLines");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.Position", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.PayPeriod", b =>
                 {
-                    b.Navigation("Employees");
-
-                    b.Navigation("WorkShifts");
+                    b.Navigation("PayStubs");
                 });
 
             modelBuilder.Entity("Crystal.Core.Entities.Publisher", b =>
@@ -977,9 +1448,19 @@ namespace Crystal.Infrastructure.Migrations
                     b.Navigation("BookPublishers");
                 });
 
-            modelBuilder.Entity("Crystal.Core.Entities.WorkShift", b =>
+            modelBuilder.Entity("Crystal.Core.Entities.RolePermission", b =>
                 {
-                    b.Navigation("Punches");
+                    b.Navigation("ScopedLocations");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.ScheduledShift", b =>
+                {
+                    b.Navigation("TimeEntries");
+                });
+
+            modelBuilder.Entity("Crystal.Core.Entities.Timesheet", b =>
+                {
+                    b.Navigation("TimeEntries");
                 });
 #pragma warning restore 612, 618
         }

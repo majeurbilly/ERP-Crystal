@@ -3,11 +3,12 @@ import axios, {
 	type AxiosResponse,
 	type InternalAxiosRequestConfig
 } from 'axios';
-import { MOCK_URL } from './apiBaseUrl';
+import { API_URL } from './apiBaseUrl';
+import { notifySessionExpired } from './sessionUtils';
 
 const apiClient: AxiosInstance = axios.create({
-	baseURL: MOCK_URL,
-	timeout: 1000,
+	baseURL: API_URL,
+	timeout: 10000,
 	headers: {
 		'Content-Type': 'application/json',
 	},
@@ -19,6 +20,11 @@ apiClient.interceptors.request.use(
 		if (token && config.headers) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
+
+		if (config.data instanceof FormData && config.headers) {
+			delete config.headers["Content-Type"];
+		}
+
 		return config
 	},
 	(error) => Promise.reject(error)
@@ -28,7 +34,7 @@ apiClient.interceptors.response.use(
 	(response: AxiosResponse) => response,
 	(error) => {
 		if (error.response?.status === 401) {
-			console.error(`Unauthorized, logging out...`);
+			notifySessionExpired();
 		}
 		return Promise.reject(error);
 	}

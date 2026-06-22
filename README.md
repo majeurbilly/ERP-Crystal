@@ -52,6 +52,34 @@ Quand vous avez terminé une grosse fonctionnalité et que les images doivent ê
 
 *(Avant de pousser, assurez-vous d'être connecté à Docker Hub en tapant `docker login`).*
 
+## 👤 Comptes de test disponibles
+
+Des comptes de démonstration sont automatiquement créés au démarrage du backend afin de faciliter les tests et le développement.
+
+| Rôle | Courriel | Mot de passe |
+|---|---|---|
+| 🔑 Admin | `admin@crystal.local` | `ValidPass1!a` |
+| 🧑‍💼 Gérant | `gerant@crystal.local` | `ValidPass1!a` |
+| 📦 Assistant | `assistant@crystal.local` | `ValidPass1!a` |
+| 👷 Employé | `employee@crystal.local` | `ValidPass1!a` |
+
+### 🔐 Authentification Swagger
+
+Pour tester les routes protégées :
+
+1. Aller sur : `http://localhost:8080/swagger`
+2. Utiliser la route de connexion (`/api/auth/login`)
+3. Utiliser le compte suivant :
+   ```json
+   {
+   "email": "admin@crystal.local",
+   "password": "ValidPass1!a"
+   }
+   ```
+4. Copier le token JWT retourné
+5. Cliquer sur le bouton **Authorize** en haut à droite
+6. Entrer :
+
 ---
 
 ## ⚠️ Notes techniques initiales (À lire une fois)
@@ -68,4 +96,3 @@ Quand vous avez fini de travailler, à la racine du projet, tapez :
 docker compose down
 ```
 Cela éteint proprement tous les conteneurs de l'ERP. Vos données dans la base de données seront conservées pour la prochaine fois grâce aux volumes Docker !
-```

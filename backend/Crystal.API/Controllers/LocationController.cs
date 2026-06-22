@@ -1,114 +1,78 @@
-﻿using Crystal.Core.DTOs.Responses;
-using Crystal.API.DTOs.Location;
-using Crystal.Core.Entities;
+﻿using Crystal.Core.Authorization;
+using Crystal.Core.DTOs.Requests;
+using Crystal.Core.DTOs.Responses;
 using Crystal.Core.Interfaces.Services;
+using Crystal.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crystal.API.Controllers
+namespace Crystal.API.Controllers;
+
+[ApiController]
+[Route("api/locations")]
+[Authorize]
+public class LocationsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class LocationsController : ControllerBase
+    private readonly ILocationService m_locationService;
+
+    public LocationsController(ILocationService p_locationService)
     {
-        private readonly ILocationService m_locationService;
+        m_locationService = p_locationService;
+    }
 
-        public LocationsController(ILocationService p_locationService)
+    [HttpGet]
+    [RequirePermission(PermissionActions.Read, PermissionSubjects.Location)]
+    public async Task<ActionResult<IEnumerable<LocationResponseDto>>> GetAll()
+    {
+        IEnumerable<LocationResponseDto> locations = await m_locationService.GetAllAsync();
+        return Ok(locations);
+    }
+
+    [HttpGet("dropdown")]
+    [RequirePermission(PermissionActions.Read, PermissionSubjects.Location)]
+    public async Task<ActionResult<List<LocationOptionResponseDto>>> GetDropdown()
+    {
+        List<LocationOptionResponseDto> options = await m_locationService.GetDropdownOptionsAsync();
+        return Ok(options);
+    }
+
+    [HttpGet("{id:int}")]
+    [RequirePermission(PermissionActions.Read, PermissionSubjects.Location)]
+    public async Task<ActionResult<LocationResponseDto>> GetById([FromRoute(Name = "id")] int p_id)
+    {
+        LocationResponseDto? location = await m_locationService.GetByIdAsync(p_id);
+
+        if (location is null)
         {
-            m_locationService = p_locationService;
+            return NotFound();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<LocationDto>>> GetAll()
-        {
-            IEnumerable<Location> locations = await m_locationService.GetAllAsync();
+        return Ok(location);
+    }
 
-            IEnumerable<LocationDto> result = locations.Select(location => new LocationDto
-            {
-                Id = location.Id,
-                Title = location.Title,
-                Address = location.Address,
-                Description = location.Description
-            });
+    [HttpPost]
+    [RequirePermission(PermissionActions.Manage, PermissionSubjects.Location)]
+    public async Task<ActionResult<LocationResponseDto>> Create([FromBody] CreateLocationRequestDto p_request)
+    {
+        LocationResponseDto created = await m_locationService.CreateAsync(p_request);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
 
-            return Ok(result);
-        }
+    [HttpPut("{id:int}")]
+    [RequirePermission(PermissionActions.Manage, PermissionSubjects.Location)]
+    public async Task<ActionResult<LocationResponseDto>> Update(
+        [FromRoute(Name = "id")] int p_id,
+        [FromBody] UpdateLocationRequestDto p_request)
+    {
+        LocationResponseDto updated = await m_locationService.UpdateAsync(p_id, p_request);
+        return Ok(updated);
+    }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<LocationDto>> GetById(int p_id)
-        {
-            Location? location = await m_locationService.GetByIdAsync(p_id);
-            if (location == null)
-            {
-                return NotFound();
-            }
-
-            LocationDto result = new()
-            {
-                Id = location.Id,
-                Title = location.Title,
-                Address = location.Address,
-                Description = location.Description
-            };
-
-            return Ok(result);
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Gerant")]
-        public async Task<ActionResult<LocationDto>> Create([FromBody] CreateLocationDto p_dto)
-        {
-            Location location = new()
-            {
-                Title = p_dto.Title,
-                Address = p_dto.Address,
-                Description = p_dto.Description
-            };
-
-            Location created = await m_locationService.CreateAsync(location);
-
-            LocationDto result = new()
-            {
-                Id = created.Id,
-                Title = created.Title,
-                Address = created.Address,
-                Description = created.Description
-            };
-
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-
-        [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Gerant")]
-        public async Task<ActionResult<LocationDto>> Update(int p_id, [FromBody] UpdateLocationDto p_dto)
-        {
-            Location location = new()
-            {
-                Title = p_dto.Title,
-                Address = p_dto.Address,
-                Description = p_dto.Description
-            };
-
-            Location updated = await m_locationService.UpdateAsync(p_id, location);
-
-            LocationDto result = new()
-            {
-                Id = updated.Id,
-                Title = updated.Title,
-                Address = updated.Address,
-                Description = updated.Description
-            };
-
-            return Ok(result);
-        }
-
-        [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(int p_id)
-        {
-            await m_locationService.DeleteAsync(p_id);
-            return NoContent();
-        }
+    [HttpDelete("{id:int}")]
+    [RequirePermission(PermissionActions.Manage, PermissionSubjects.Location)]
+    public async Task<IActionResult> Delete([FromRoute(Name = "id")] int p_id)
+    {
+        await m_locationService.DeleteAsync(p_id);
+        return NoContent();
     }
 }

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librairie Crystal — Rôles et permissions</title>
+    <style>
+        :root {
+            --bg: #0f1419;
+            --surface: #1a2332;
+            --surface-2: #243044;
+            --border: #334155;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --admin: #f87171;
+            --gerant: #fbbf24;
+            --assistant: #60a5fa;
+            --employe: #4ade80;
+            --ok: #34d399;
+            --warn: #fbbf24;
+            --radius: 14px;
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .deck {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        .slide {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 1.5rem;
+        }
+
+        .slide.hero {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 55%, #172554 100%);
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 999px;
+            padding: 0.35rem 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+        }
+
+        h2 {
+            font-size: 1.65rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        p, li { color: var(--muted); }
+
+        .subtitle {
+            font-size: 1.15rem;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .toc {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            transition: background 0.15s;
+        }
+
+        .toc a:hover { background: #2d3b52; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .card.highlight {
+            border-color: rgba(56, 189, 248, 0.45);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent);
+        }
+
+        .card h3 { display: flex; align-items: center; gap: 0.5rem; }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot.admin { background: var(--admin); }
+        .dot.gerant { background: var(--gerant); }
+        .dot.assistant { background: var(--assistant); }
+        .dot.employe { background: var(--employe); }
+
+        ul.clean {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        ul.clean li {
+            padding: 0.35rem 0 0.35rem 1.35rem;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        ul.clean li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--ok);
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        ul.clean li.no::before {
+            content: "—";
+            color: var(--muted);
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .role-card {
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+
+        .role-card.admin { border-top: 4px solid var(--admin); }
+        .role-card.gerant { border-top: 4px solid var(--gerant); }
+        .role-card.assistant { border-top: 4px solid var(--assistant); }
+        .role-card.employe { border-top: 4px solid var(--employe); }
+
+        .role-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .role-tagline {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 0.85rem;
+        }
+
+        .flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.25rem 0;
+        }
+
+        .flow-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            min-width: 180px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+        }
+
+        .flow-arrow {
+            color: var(--accent);
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.92rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 0.7rem 0.85rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--surface-2);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        td { color: var(--muted); }
+
+        .yes { color: var(--ok); font-weight: 600; }
+        .partial { color: var(--warn); font-weight: 600; }
+        .no { color: #64748b; }
+
+        .faq-item {
+            border-top: 1px solid var(--border);
+            padding: 1.1rem 0;
+        }
+
+        .faq-item:first-of-type { border-top: none; padding-top: 0; }
+
+        .faq-q {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .example {
+            background: #111827;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 10px 10px 0;
+            padding: 1rem 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .example strong { color: #fff; }
+
+        footer {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        @media print {
+            body { background: #fff; color: #111; }
+            .slide { box-shadow: none; break-inside: avoid; page-break-inside: avoid; }
+            p, li, td { color: #333; }
+            h1, h2, h3, .role-title, th, .faq-q, .example strong { color: #111; }
+        }
+    </style>
+</head>
+<body>
+    <div class="deck">
+
+        <!-- Diapositive 1 — Titre -->
+        <section class="slide hero" id="intro">
+            <div class="badge">Guide utilisateur · Ressources humaines</div>
+            <h1>Rôles et permissions</h1>
+            <p class="subtitle">
+                Comprendre le champ unique <strong style="color:#fff">Rôle</strong> dans Librairie Crystal :
+                les 4 profils standards, les rôles personnalisés, et ce que chaque personne peut faire.
+            </p>
+            <nav class="toc" aria-label="Sommaire">
+                <a href="#deux-niveaux">Comment ça marche</a>
+                <a href="#profils">Les 4 profils</a>
+                <a href="#comparaison">Tableau comparatif</a>
+                <a href="#sur-mesure">Rôles personnalisés</a>
+                <a href="#pourquoi-pas-que-sur-mesure">Pourquoi des profils standards ?</a>
+                <a href="#exemples">Exemples concrets</a>
+            </nav>
+        </section>
+
+        <!-- Diapositive 2 — Le problème -->
+        <section class="slide" id="probleme">
+            <h2>Un seul champ « Rôle »</h2>
+            <p>
+                Lors de la création ou modification d'un utilisateur, un seul champ <strong style="color:#fff">Rôle</strong>
+                est proposé. Il liste les profils standards et les rôles personnalisés configurés dans le menu
+                <em>Rôles et permissions</em> (<code>/roles</code>).
+            </p>
+            <div class="two-col" style="margin-top: 1.5rem;">
+                <div class="card highlight">
+                    <h3>Profils standards (presets)</h3>
+                    <p>Administrateur, Gérant, Assistant ou Employé — prêts à l'emploi, avec des droits cohérents pour la plupart des postes.</p>
+                </div>
+                <div class="card highlight">
+                    <h3>Rôles personnalisés</h3>
+                    <p>Pour les cas particuliers (ex. inventaire d'une succursale, droits réduits temporaires). Créés et gérés dans <em>Rôles et permissions</em>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diapositive 3 — Comment ça marche -->
+        <section class="slide" id="deux-niveaux">
+            <h2>Comment l'application décide des droits</h2>
+            <div class="flow">
+                <div class="flow-box">Rôle assigné<br><small>(liste /roles)</small></div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">Permissions<br><small>du rôle en base</small></div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">Menus, boutons<br>et accès API</div>
+            </div>
+            <div class="example">
+                <strong>Règle simple :</strong> choisir le rôle qui correspond au poste. Pour un vendeur standard → <em>Employé</em>.
+                Pour un responsable de succursale → <em>Gérant</em>. Les exceptions passent par un rôle personnalisé.
+            </div>
+        </section>
+
+        <!-- Diapositive 4 — Les 4 profils -->
+        <section class="slide" id="profils">
+            <h2>Les 4 profils standards et leurs droits</h2>
+            <p>Ce sont les rôles <strong style="color:#fff">presets</strong> proposés par défaut dans la liste des rôles.</p>
+
+            <div class="role-grid">
+                <article class="role-card admin">
+                    <div class="role-title"><span class="dot admin"></span> Administrateur</div>
+                    <div class="role-tagline">Direction, TI, propriétaire — accès total</div>
+                    <ul class="clean">
+                        <li>Accès complet à toute l'application</li>
+                        <li>Gestion des utilisateurs et des rôles</li>
+                        <li>Tous les modules RH, inventaire et catalogue</li>
+                        <li>Configuration système</li>
+                    </ul>
+                </article>
+
+                <article class="role-card gerant">
+                    <div class="role-title"><span class="dot gerant"></span> Gérant de succursale</div>
+                    <div class="role-tagline">Responsable d'une succursale</div>
+                    <ul class="clean">
+                        <li>Tableau de bord RH (consultation)</li>
+                        <li>Gestion complète : employés, congés, horaires, pointages, feuilles de temps, paie, contrats</li>
+                        <li>Succursales : consulter et modifier</li>
+                        <li>Catalogue et inventaire (toutes succursales)</li>
+                        <li>Postes : gestion complète</li>
+                        <li>Catégories : consultation</li>
+                        <li>Mon profil : consulter et modifier</li>
+                    </ul>
+                </article>
+
+                <article class="role-card assistant">
+                    <div class="role-title"><span class="dot assistant"></span> Assistant</div>
+                    <div class="role-tagline">Soutien administratif en magasin</div>
+                    <ul class="clean">
+                        <li>Tableau de bord RH (consultation)</li>
+                        <li>Employés : consultation seulement</li>
+                        <li>Congés : créer et consulter</li>
+                        <li>Horaires : consultation</li>
+                        <li>Pointages : consulter et pointer</li>
+                        <li>Feuilles de temps : consulter et soumettre</li>
+                        <li>Catalogue, inventaire et succursales : consultation</li>
+                        <li class="no">Pas d'accès à la paie ni aux contrats</li>
+                        <li>Mon profil : consulter et modifier</li>
+                    </ul>
+                </article>
+
+                <article class="role-card employe">
+                    <div class="role-title"><span class="dot employe"></span> Employé</div>
+                    <div class="role-tagline">Personnel de terrain — portail self-service</div>
+                    <ul class="clean">
+                        <li>Mon espace : sa fiche, ses horaires, ses congés</li>
+                        <li>Congés : demander et suivre</li>
+                        <li>Pointages : consulter et pointer</li>
+                        <li>Feuilles de temps : consulter les siennes</li>
+                        <li>Catalogue et succursales : consultation</li>
+                        <li class="no">Pas d'accès à la gestion RH d'équipe</li>
+                        <li class="no">Pas d'accès à la paie ni à la gestion des utilisateurs</li>
+                        <li>Mon profil : consulter et modifier</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <!-- Diapositive 5 — Tableau comparatif -->
+        <section class="slide" id="comparaison">
+            <h2>Tableau comparatif rapide</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module / action</th>
+                        <th>Administrateur</th>
+                        <th>Gérant</th>
+                        <th>Assistant</th>
+                        <th>Employé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Toute l'application</td>
+                        <td class="yes">Complet</td>
+                        <td class="no">—</td>
+                        <td class="no">—</td>
+                        <td class="no">—</td>
+                    </tr>
+                    <tr>
+                        <td>Utilisateurs et rôles</td>
+                        <td class="yes">Complet</td>
+                        <td class="partial">Partiel*</td>
+                        <td class="no">—</td>
+                        <td class="no">—</td>
+                    </tr>
+                    <tr>
+                        <td>Employés (fiches RH)</td>
+                        <td class="yes">Complet</td>
+                        <td class="yes">Complet</td>
+                        <td class="partial">Consulter</td>
+                        <td class="partial">Sa fiche</td>
+                    </tr>
+                    <tr>
+                        <td>Congés</td>
+                        <td class="yes">Complet</td>
+                        <td class="yes">Complet</td>
+                        <td class="partial">Créer / consulter</td>
+                        <td class="partial">Créer / consulter</td>
+                    </tr>
+                    <tr>
+                        <td>Paie</td>
+                        <td class="yes">Complet</td>
+                        <td class="yes">Complet</td>
+                        <td class="no">—</td>
+                        <td class="no">—</td>
+                    </tr>
+                    <tr>
+                        <td>Contrats de travail</td>
+                        <td class="yes">Complet</td>
+                        <td class="yes">Complet</td>
+                        <td class="no">—</td>
+                        <td class="no">—</td>
+                    </tr>
+                    <tr>
+                        <td>Inventaire</td>
+                        <td class="yes">Complet</td>
+                        <td class="yes">Lire / modifier</td>
+                        <td class="partial">Consulter</td>
+                        <td class="no">—</td>
+                    </tr>
+                    <tr>
+                        <td>Mon espace personnel</td>
+                        <td class="yes">Oui</td>
+                        <td class="yes">Oui</td>
+                        <td class="yes">Oui</td>
+                        <td class="yes">Oui</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top:0.75rem; font-size:0.88rem;">
+                * Le Gérant peut gérer les utilisateurs de son périmètre selon les permissions actives du système.
+            </p>
+        </section>
+
+        <!-- Diapositive 6 — Permissions sur mesure -->
+        <section class="slide" id="sur-mesure">
+            <h2>Permissions sur mesure — à quoi ça sert ?</h2>
+            <p>
+                Les rôles personnalisés (menu <strong style="color:#fff">Rôles</strong>) permettent d'ajuster finement
+                ce qu'une personne peut faire, module par module.
+            </p>
+            <div class="two-col">
+                <div class="card">
+                    <h3>Quand les utiliser</h3>
+                    <ul class="clean">
+                        <li>Un employé qui gère l'inventaire sans être gérant</li>
+                        <li>Un assistant avec accès paie en lecture seule</li>
+                        <li>Un stagiaire avec droits limités à une succursale</li>
+                        <li>Tester un nouveau profil avant de le généraliser</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Quand ne pas les utiliser</h3>
+                    <ul class="clean">
+                        <li class="no">Pour un employé standard → laisser « Standard »</li>
+                        <li class="no">Pour remplacer le type de compte → garder les deux champs</li>
+                        <li class="no">Pour chaque nouvelle personne sans raison → trop complexe</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="example">
+                <strong>Exemple :</strong> Marie est <em>Employée</em> (type de compte) mais vous lui assignez le rôle sur mesure
+                « Inventaire — succursale Centre-ville ». Elle garde son portail employé, mais peut en plus modifier
+                l'inventaire de cette succursale.
+            </div>
+        </section>
+
+        <!-- Diapositive 7 — Pourquoi pas tout sur mesure -->
+        <section class="slide" id="pourquoi-pas-que-sur-mesure">
+            <h2>Pourquoi ne pas avoir uniquement des rôles sur mesure ?</h2>
+            <p>C'est une bonne question. Voici pourquoi Crystal garde les deux niveaux :</p>
+
+            <div class="faq-item">
+                <div class="faq-q">1. Simplicité au quotidien</div>
+                <p>La plupart des personnes correspondent à un des 4 profils. Choisir « Employé » + « Standard » prend 5 secondes. Créer un rôle sur mesure pour chacun serait long et source d'erreurs.</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">2. Sécurité en couches</div>
+                <p>Le type de compte définit aussi des garde-fous techniques (connexion, accès à certaines fonctions sensibles). Les permissions sur mesure affinent l'interface, mais ne remplacent pas encore entièrement ce socle — c'est une migration en cours dans le système.</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">3. Modèles réutilisables</div>
+                <p>Les 4 profils standards sont des <em>modèles</em>. Un rôle sur mesure part souvent d'un de ces modèles (ex. copie de « Employé ») qu'on ajuste. Sans modèle de base, chaque rôle partirait de zéro.</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">4. Lisibilité pour l'équipe RH</div>
+                <p>« C'est un Gérant » est immédiatement compris par tout le monde. « C'est le rôle custom #47 avec 23 permissions » ne l'est pas.</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">5. Vision à long terme</div>
+                <p>L'objectif du projet est d'unifier progressivement tout sous les permissions dynamiques. Aujourd'hui, les deux coexistent : le type de compte pour la simplicité et la sécurité de base, les permissions sur mesure pour les cas particuliers.</p>
+            </div>
+        </section>
+
+        <!-- Diapositive 8 — Exemples -->
+        <section class="slide" id="exemples">
+            <h2>Exemples concrets — que choisir ?</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Situation</th>
+                        <th>Type de compte</th>
+                        <th>Permissions sur mesure</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Nouveau vendeur en magasin</td>
+                        <td>Employé</td>
+                        <td>Standard</td>
+                    </tr>
+                    <tr>
+                        <td>Responsable de succursale</td>
+                        <td>Gérant</td>
+                        <td>Standard</td>
+                    </tr>
+                    <tr>
+                        <td>Adjoint administratif</td>
+                        <td>Assistant</td>
+                        <td>Standard</td>
+                    </tr>
+                    <tr>
+                        <td>Propriétaire / directeur TI</td>
+                        <td>Administrateur</td>
+                        <td>Standard</td>
+                    </tr>
+                    <tr>
+                        <td>Employé qui gère l'inventaire d'une succursale</td>
+                        <td>Employé</td>
+                        <td>Rôle custom « Inventaire — [succursale] »</td>
+                    </tr>
+                    <tr>
+                        <td>Gérant temporairement restreint (congé parental)</td>
+                        <td>Gérant</td>
+                        <td>Rôle custom avec moins de droits</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Diapositive 9 — Résumé -->
+        <section class="slide" id="resume">
+            <h2>En résumé</h2>
+            <div class="two-col">
+                <div class="card highlight">
+                    <h3>Profils standards</h3>
+                    <ul class="clean">
+                        <li>4 rôles presets dans la liste</li>
+                        <li>Couvrent la majorité des postes</li>
+                        <li>Choix par défaut pour un nouvel utilisateur</li>
+                    </ul>
+                </div>
+                <div class="card highlight">
+                    <h3>Rôles personnalisés</h3>
+                    <ul class="clean">
+                        <li>Créés dans Rôles et permissions</li>
+                        <li>Pour les exceptions métier</li>
+                        <li>Assignés via le même champ Rôle</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="example" style="margin-top: 1.5rem;">
+                <strong>Phrase à retenir :</strong>
+                Un seul champ <em>Rôle</em> par utilisateur. Choisissez un preset adapté au poste ;
+                créez un rôle personnalisé seulement si les droits standards ne conviennent pas.
+            </div>
+        </section>
+
+        <footer>
+            Librairie Crystal ERP · Documentation interne · Généré à partir des profils définis dans le système
+        </footer>
+    </div>
+</body>
+</html>

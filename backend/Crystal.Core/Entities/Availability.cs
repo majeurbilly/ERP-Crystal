@@ -4,8 +4,8 @@ public class Availability
 {
     public int Id { get; set; }
 
-    public int EmployeeId { get; set; }
-    public Employee Employee { get; set; } = null!;
+    public int EmployeeProfileId { get; set; }
+    public EmployeeProfile EmployeeProfile { get; set; } = null!;
 
     public DateOnly AvailabilityDate { get; set; }
 

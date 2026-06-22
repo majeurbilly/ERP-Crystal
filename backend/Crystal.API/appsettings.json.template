@@ -1,26 +1,17 @@
 {
-  "Jwt": {
-    "Key": "SUPER_SECRET_KEY_123456789_SUPER_LONGUE",
-    "Issuer": "CrystalAPI",
-    "Audience": "CrystalAPIUsers"
-  },
   "Logging": {
     "LogLevel": {
       "Default": "Information",
       "Microsoft.AspNetCore": "Warning"
     }
   },
-<<<<<<<< HEAD:backend/Crystal.API/appsettings.json
-  "AllowedHosts": "*"
-========
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=bd-erp-crystal;Username=stringempty;Password=Pizzapizza123"
+    "DefaultConnection": "Host=localhost;Port=5433;Database=bd-erp-crystal;Username=stringempty;Password=Pizzapizza123"
   },
   "Jwt": {
-    "Key": "MaCleSecreteSuperLonguePourJwt2026ERP!",
+    "Key": "SUPER_SECRET_KEY_123456789_SUPER_LONGUE",
     "Issuer": "CrystalAPI",
     "Audience": "CrystalAPIUsers"
   }
->>>>>>>> eef314c53be4d06a94e3aba0bf7910ed4b84b798:backend/Crystal.API/appsettings.json.template
 }
