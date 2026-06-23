@@ -126,7 +126,7 @@ describe("PayrollGenerateForm", () => {
     it("should render branch and completed week controls from mocked queries", async () => {
         renderPayrollGenerateForm();
 
-        expect(document.querySelector("h6")).toHaveTextContent("GÃ©nÃ©rer");
+        expect(document.querySelector("h6")).toHaveTextContent("Générer les fiches de paie");
         expect(payrollService.getPeriods).toHaveBeenCalled();
         expect(locationService.getAll).toHaveBeenCalled();
 
@@ -142,7 +142,7 @@ describe("PayrollGenerateForm", () => {
     it("should generate payroll for the selected completed week and branch scope on submit", async () => {
         renderPayrollGenerateForm();
 
-        const submitButton = await screen.findByRole("button", { name: /GÃ©nÃ©rer|Générer/ });
+        const submitButton = await screen.findByRole("button", { name: "Générer" });
 
         await waitFor(() => {
             expect(submitButton).not.toBeDisabled();
@@ -171,7 +171,7 @@ describe("PayrollGenerateForm", () => {
 
         expect(periodStartInput.checkValidity()).toBe(false);
 
-        const submitButton = await screen.findByRole("button", { name: /GÃ©nÃ©rer|Générer/ });
+        const submitButton = await screen.findByRole("button", { name: "Générer" });
         fireEvent.click(submitButton);
 
         expect(generatePayrollForPeriodMock).not.toHaveBeenCalled();

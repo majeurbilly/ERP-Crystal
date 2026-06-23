@@ -20,7 +20,7 @@ describe("Phase 2 — permissionEntityService", () => {
 
         const entities = await permissionEntityService.getAll();
 
-        expect(apiClient.get).toHaveBeenCalledWith("/api/permission-entities");
+        expect(apiClient.get).toHaveBeenCalledWith("http://localhost:8080/api/permission-entities");
         expect(entities).toHaveLength(2);
         expect(entities[0].id).toBe("employee_profile");
     });

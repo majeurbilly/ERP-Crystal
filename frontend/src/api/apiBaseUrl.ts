@@ -1,5 +1,6 @@
-export const AUTH_URL: string = "";
-export const API_URL: string = "/api";
+export const AUTH_URL: string = "http://localhost:8080";
+export const API_URL: string = `${AUTH_URL}/api`;
+
 
 export const USE_MOCK_API: boolean = false;
 

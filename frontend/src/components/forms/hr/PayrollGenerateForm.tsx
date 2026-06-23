@@ -141,13 +141,13 @@ export default function PayrollGenerateForm({
         }
 
         if (!periodStartDate) {
-            newErrors.periodStartDate = "La date de dÃ©but est requise.";
+            newErrors.periodStartDate = "La date de début est requise.";
             isValid = false;
         } else if (!isMondayDateValue(periodStartDate)) {
-            newErrors.periodStartDate = "La date de dÃ©but doit Ãªtre un lundi.";
+            newErrors.periodStartDate = "La date de début doit être un lundi.";
             isValid = false;
         } else if (!isCompletePastWeekDateValue(periodStartDate)) {
-            newErrors.periodStartDate = "La semaine doit Ãªtre complÃ¨tement terminÃ©e.";
+            newErrors.periodStartDate = "La semaine doit être complètement terminée.";
             isValid = false;
         }
 
@@ -191,7 +191,7 @@ export default function PayrollGenerateForm({
                 locationId: locationId ? Number(locationId) : null,
             });
             notifySuccessMessage(
-                `${result.createdCount} fiche(s) gÃ©nÃ©rÃ©e(s), ${result.existingCount} dÃ©jÃ  existante(s), ${result.skippedCount} ignorÃ©e(s).`
+                `${result.createdCount} fiche(s) générée(s), ${result.existingCount} déjà existante(s), ${result.skippedCount} ignorée(s).`
             );
             handleClose();
         } catch (error: unknown) {
@@ -206,13 +206,13 @@ export default function PayrollGenerateForm({
         <FormModal
             open={showPayrollGenerateForm}
             onClose={handleClose}
-            title="GÃ©nÃ©rer les fiches de paie"
+            title="Générer les fiches de paie"
             onSubmit={handleSubmit}
             isSubmitting={isGeneratingPayrollForPeriod || isLoadingOptions}
-            confirmLabel="GÃ©nÃ©rer"
+            confirmLabel="Générer"
         >
             <Alert severity="info" sx={{ mb: 2 }}>
-                Les fiches seront gÃ©nÃ©rÃ©es pour les feuilles de temps approuvÃ©es couvrant exactement la semaine terminÃ©e et la succursale choisies.
+                Les fiches seront générées pour les feuilles de temps approuvées couvrant exactement la semaine terminée et la succursale choisies.
             </Alert>
 
             <FormControl fullWidth sx={{ mb: 2 }} required={!isSuperAdmin} error={!!errors.locationId}>
@@ -254,7 +254,7 @@ export default function PayrollGenerateForm({
 
             <TextField
                 fullWidth
-                label="DÃ©but de semaine"
+                label="Début de semaine"
                 type="date"
                 value={periodStartDate}
                 onChange={(p_event) => setPeriodStartDate(p_event.target.value)}
@@ -269,12 +269,12 @@ export default function PayrollGenerateForm({
                 error={!!errors.periodStartDate}
                 helperText={
                     errors.periodStartDate
-                    || "SÃ©lectionnez un lundi d'une semaine complÃ¨tement terminÃ©e."
+                    || "Sélectionnez un lundi d'une semaine complètement terminée."
                 }
             />
 
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {`PÃ©riode gÃ©nÃ©rÃ©e : ${formatPayPeriodLabel({
+                {`Période générée : ${formatPayPeriodLabel({
                     startDate: periodStartDate,
                     endDate: periodEndDate,
                 })}`}

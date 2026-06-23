@@ -144,12 +144,12 @@ export default function MySpacePage() {
                     ? `Prochain : ${nextShift.date} (${nextShift.startTime})`
                     : upcomingShifts.length > 0
                         ? `${monthShifts.length} quarts ce mois`
-                        : "Aucun quart planifiÃ©",
+                        : "Aucun quart planifié",
                 icon: <CalendarMonthIcon fontSize="large" />,
             },
             {
                 id: "conges",
-                label: "CongÃ©s",
+                label: "Congés",
                 preview: pendingLeaves > 0
                     ? `${pendingLeaves} demande${pendingLeaves > 1 ? "s" : ""} en attente`
                     : leaves.length > 0
@@ -162,14 +162,14 @@ export default function MySpacePage() {
                 label: "Ma fiche",
                 preview: profile
                     ? `${profile.firstName} ${profile.lastName}`
-                    : "Profil non liÃ©",
+                    : "Profil non lié",
                 icon: <PersonIcon fontSize="large" />,
             },
             {
                 id: "pointages",
                 label: "Pointages",
                 preview: timeEntries.length > 0
-                    ? `${timeEntries.length} entrÃ©e${timeEntries.length > 1 ? "s" : ""}`
+                    ? `${timeEntries.length} entrée${timeEntries.length > 1 ? "s" : ""}`
                     : "Aucun pointage",
                 icon: <AccessTimeIcon fontSize="large" />,
             },
@@ -225,7 +225,7 @@ export default function MySpacePage() {
                                     "&:hover": { bgcolor: "actionButtons.add.bg", opacity: 0.9 },
                                 }}
                             >
-                                Demander un congÃ©
+                                Demander un congé
                             </Button>
                         </Box>
                     )}

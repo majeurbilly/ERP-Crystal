@@ -1,12 +1,24 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "../sidebar/Sidebar";
 import Toolbar from "@mui/material/Toolbar";
 import Box from "@mui/material/Box";
 import FormRoot from "../forms/FormRoot";
 import RouteErrorBoundary from "../routes/RouteErrorBoundary";
+import { notifyErrorMessage } from "../../data/utils/popupMessageManager";
+import { useEffect } from "react";
 
 const AppLayout = () => {
+
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.unauthorized) {
+            notifyErrorMessage("pas permission mon coco");
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
+
     return (
         <>
             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

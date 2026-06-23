@@ -59,14 +59,14 @@ import { extractApiErrorMessage } from "../../../data/utils/extractApiErrorMessa
 import { usePermissions } from "../../../permissions/usePermissions";
 import { ENTITY_TYPES } from "../../../permissions/permissions";
 
-const WIZARD_STEPS: string[] = ["Poste", "Profil", "AccÃ¨s", "Contrat", "Confirmation"];
+const WIZARD_STEPS: string[] = ["Poste", "Profil", "Accès", "Contrat", "Confirmation"];
 
 const NO_LOCATION_VALUE = "__none_location__";
 const NO_END_DATE_VALUE = "";
 const EMPLOYEE_STATUS_OPTIONS: Array<{ value: string; label: string }> = [
     { value: "Active", label: "Actif" },
     { value: "Inactive", label: "Inactif" },
-    { value: "OnLeave", label: "En congÃ©" },
+    { value: "OnLeave", label: "En congé" },
 ];
 
 type JobPositionMode = "existing" | "new";
@@ -195,7 +195,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
         if (p_step === 0) {
             if (jobPositionMode === "existing") {
                 if (!selectedJobPositionId) {
-                    setStepError("SÃ©lectionnez un poste existant.");
+                    setStepError("Sélectionnez un poste existant.");
                     return false;
                 }
             } else {
@@ -212,7 +212,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
 
         if (p_step === 1) {
             if (!firstName.trim() || !lastName.trim()) {
-                setStepError("Le prÃ©nom et le nom sont requis.");
+                setStepError("Le prénom et le nom sont requis.");
                 return false;
             }
             if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -225,34 +225,34 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
             }
             const parsedSalary: number = Number(salary);
             if (!salary.trim() || Number.isNaN(parsedSalary) || parsedSalary < 0) {
-                setStepError("Le salaire de rÃ©fÃ©rence doit Ãªtre un nombre positif ou nul.");
+                setStepError("Le salaire de référence doit être un nombre positif ou nul.");
                 return false;
             }
         }
 
         if (p_step === 2 && createUserAccount) {
             if (!userName.trim() || userName.trim().length < 3) {
-                setStepError("Le nom d'utilisateur doit contenir au moins 3 caractÃ¨res.");
+                setStepError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
                 return false;
             }
             if (!password.trim() || password.trim().length < 8) {
-                setStepError("Le mot de passe doit contenir au moins 8 caractÃ¨res.");
+                setStepError("Le mot de passe doit contenir au moins 8 caractères.");
                 return false;
             }
         }
 
         if (p_step === 3 && addContract) {
             if (!contractStartDate) {
-                setStepError("La date de dÃ©but du contrat est requise.");
+                setStepError("La date de début du contrat est requise.");
                 return false;
             }
             if (contractEndDate && contractEndDate < contractStartDate) {
-                setStepError("La date de fin du contrat doit Ãªtre postÃ©rieure ou Ã©gale Ã  la date de dÃ©but.");
+                setStepError("La date de fin du contrat doit être postérieure ou égale à la date de début.");
                 return false;
             }
             const parsedBaseRate: number = Number(baseRate);
             if (!baseRate.trim() || Number.isNaN(parsedBaseRate) || parsedBaseRate < 0) {
-                setStepError("Le montant de rÃ©munÃ©ration doit Ãªtre un nombre positif ou nul.");
+                setStepError("Le montant de rémunération doit être un nombre positif ou nul.");
                 return false;
             }
         }
@@ -332,7 +332,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
             ]);
 
             notifySuccessMessage(
-                `L'employÃ© Â« ${createdEmployee.firstName} ${createdEmployee.lastName} Â» a Ã©tÃ© crÃ©Ã© avec succÃ¨s.`
+                `L'employé « ${createdEmployee.firstName} ${createdEmployee.lastName} » a été créé avec succès.`
             );
             onClose();
         } catch (error: unknown) {
@@ -358,8 +358,8 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                 return (
                     <>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Choisissez le poste occupÃ© par cet employÃ©. Vous pouvez en crÃ©er un nouveau si
-                            nÃ©cessaire.
+                            Choisissez le poste occupé par cet employé. Vous pouvez en créer un nouveau si
+                            nécessaire.
                         </Typography>
                         <FormControl component="fieldset" sx={{ mb: 2 }}>
                             <RadioGroup
@@ -377,7 +377,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                                 <FormControlLabel
                                     value="new"
                                     control={<Radio />}
-                                    label="CrÃ©er un nouveau poste"
+                                    label="Créer un nouveau poste"
                                 />
                             </RadioGroup>
                         </FormControl>
@@ -430,11 +430,11 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                 return (
                     <>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Renseignez les informations du dossier employÃ©.
+                            Renseignez les informations du dossier employé.
                         </Typography>
                         <TextField
                             fullWidth
-                            label="PrÃ©nom"
+                            label="Prénom"
                             value={firstName}
                             onChange={(p_event) => setFirstName(p_event.target.value)}
                             sx={{ mb: 2 }}
@@ -469,12 +469,12 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                         />
                         <TextField
                             fullWidth
-                            label="Salaire de rÃ©fÃ©rence"
+                            label="Salaire de référence"
                             type="number"
                             inputProps={{ min: 0, step: "0.01" }}
                             value={salary}
                             onChange={(p_event) => setSalary(p_event.target.value)}
-                            helperText="Montant indicatif dans le dossier employÃ© (distinct du contrat)."
+                            helperText="Montant indicatif dans le dossier employé (distinct du contrat)."
                             sx={{ mb: 2 }}
                             required
                         />
@@ -520,7 +520,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                 return (
                     <>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Liez un compte utilisateur pour permettre la connexion Ã  l&apos;application.
+                            Liez un compte utilisateur pour permettre la connexion à l'application.
                         </Typography>
                         <FormControlLabel
                             control={
@@ -529,7 +529,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                                     onChange={(p_event) => setCreateUserAccount(p_event.target.checked)}
                                 />
                             }
-                            label="CrÃ©er un compte utilisateur"
+                            label="Créer un compte utilisateur"
                             sx={{ mb: 2, display: "block" }}
                         />
                         {createUserAccount ? (
@@ -575,8 +575,8 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                             </>
                         ) : (
                             <Alert severity="info">
-                                L&apos;employÃ© sera crÃ©Ã© sans compte de connexion. Vous pourrez en ajouter un
-                                plus tard depuis la fiche employÃ©.
+                                L'employé sera créé sans compte de connexion. Vous pourrez en ajouter un
+                                plus tard depuis la fiche employé.
                             </Alert>
                         )}
                     </>
@@ -585,7 +585,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                 return (
                     <>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            DÃ©finissez les conditions de rÃ©munÃ©ration de l&apos;employÃ©.
+                            Définissez les conditions de rémunération de l'employé.
                         </Typography>
                         <FormControlLabel
                             control={
@@ -617,10 +617,10 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                                     </Select>
                                 </FormControl>
                                 <FormControl fullWidth sx={{ mb: 2 }} required>
-                                    <InputLabel id="onboarding-wage-type-label">Type de rÃ©munÃ©ration</InputLabel>
+                                    <InputLabel id="onboarding-wage-type-label">Type de rémunération</InputLabel>
                                     <Select
                                         labelId="onboarding-wage-type-label"
-                                        label="Type de rÃ©munÃ©ration"
+                                        label="Type de rémunération"
                                         value={wageType}
                                         onChange={(p_event: SelectChangeEvent<WageType>) =>
                                             setWageType(p_event.target.value as WageType)
@@ -646,7 +646,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                                 />
                                 <TextField
                                     fullWidth
-                                    label="Date de dÃ©but"
+                                    label="Date de début"
                                     type="date"
                                     value={contractStartDate}
                                     onChange={(p_event) => setContractStartDate(p_event.target.value)}
@@ -667,7 +667,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                             </>
                         ) : (
                             <Alert severity="info">
-                                Vous pourrez ajouter un contrat plus tard depuis la fiche employÃ© ou la page
+                                Vous pourrez ajouter un contrat plus tard depuis la fiche employé ou la page
                                 Contrats de travail.
                             </Alert>
                         )}
@@ -677,7 +677,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                 return (
                     <>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            VÃ©rifiez les informations avant de finaliser la crÃ©ation.
+                            Vérifiez les informations avant de finaliser la création.
                         </Typography>
                         <Typography variant="subtitle2">Poste</Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
@@ -685,30 +685,30 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
                             {jobPositionMode === "new" ? " (nouveau)" : ""}
                         </Typography>
                         <Divider sx={{ my: 1.5 }} />
-                        <Typography variant="subtitle2">Profil employÃ©</Typography>
+                        <Typography variant="subtitle2">Profil employé</Typography>
                         <Typography variant="body2">
-                            {firstName} {lastName} â€” {email}
+                            {firstName} {lastName} — {email}
                         </Typography>
                         <Typography variant="body2">
-                            Embauche : {hiringDate} Â· Salaire de rÃ©fÃ©rence : {salary} $ Â· Statut :{" "}
+                            Embauche : {hiringDate} · Salaire de référence : {salary} $ · Statut :{" "}
                             {EMPLOYEE_STATUS_OPTIONS.find((p) => p.value === status)?.label ?? status}
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
                             Succursale : {selectedLocationLabel}
                         </Typography>
                         <Divider sx={{ my: 1.5 }} />
-                        <Typography variant="subtitle2">AccÃ¨s systÃ¨me</Typography>
+                        <Typography variant="subtitle2">Accès système</Typography>
                         <Typography variant="body2" sx={{ mb: 1 }}>
                             {createUserAccount
-                                ? `Compte Â« ${userName} Â» (${(dynamicRolesQuery.data ?? []).find((p_role) => p_role.id === assignedRoleId)?.name ?? getAssignedRoleDisplayName({ dynamicRoleId: assignedRoleId })})`
+                                ? `Compte « ${userName} » (${(dynamicRolesQuery.data ?? []).find((p_role) => p_role.id === assignedRoleId)?.name ?? getAssignedRoleDisplayName({ dynamicRoleId: assignedRoleId })})`
                                 : "Aucun compte utilisateur"}
                         </Typography>
                         <Divider sx={{ my: 1.5 }} />
                         <Typography variant="subtitle2">Contrat</Typography>
                         <Typography variant="body2">
                             {addContract
-                                ? `${CONTRACT_TYPE_LABELS[contractType]} Â· ${WAGE_TYPE_LABELS[wageType]} Â· ${baseRate} $`
-                                : "Aucun contrat (Ã  ajouter plus tard)"}
+                                ? `${CONTRACT_TYPE_LABELS[contractType]} · ${WAGE_TYPE_LABELS[wageType]} · ${baseRate} $`
+                                : "Aucun contrat (à ajouter plus tard)"}
                         </Typography>
                     </>
                 );
@@ -719,7 +719,7 @@ export default function EmployeeOnboardingWizard({ open, onClose }: EmployeeOnbo
         <WizardModal
             open={open}
             onClose={onClose}
-            title="Assistant â€” Nouvel employÃ©"
+            title="Assistant — Nouvel employé"
             steps={WIZARD_STEPS}
             activeStep={activeStep}
             onBack={() => {

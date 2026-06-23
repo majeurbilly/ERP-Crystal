@@ -88,7 +88,7 @@ export default function TimesheetDetailsPage() {
 
     const timesheet: Timesheet | undefined = timesheetQuery.data;
     const returnUrl = canReadHrDashboard ? ROUTE_TIMESHEETS : `${ROUTE_MON_ESPACE}?tab=feuille`;
-    const returnLabel = canReadHrDashboard ? "Retour aux feuilles de temps" : "Retour Ã  Mon espace";
+    const returnLabel = canReadHrDashboard ? "Retour aux feuilles de temps" : "Retour à Mon espace";
     const hasError: boolean =
         !!timesheetQuery.error || !isValidTimesheetId || (!timesheet && !timesheetQuery.isLoading);
     const totalHours: number = (timesheet?.timeEntries ?? []).reduce(
@@ -104,7 +104,7 @@ export default function TimesheetDetailsPage() {
 
         try {
             await updateTimesheetStatus({ id: timesheet.id, status: p_status });
-            notifySuccessMessage("Le statut de la feuille de temps a Ã©tÃ© mis Ã  jour.");
+            notifySuccessMessage("Le statut de la feuille de temps a été mis à jour.");
         } catch (error: unknown) {
             notifyErrorMessage(extractApiErrorMessage(error));
         }
@@ -148,7 +148,7 @@ export default function TimesheetDetailsPage() {
 
         try {
             await reloadTimesheetTimeEntries(timesheet.id);
-            notifySuccessMessage("Les pointages liÃ©s Ã  la feuille de temps ont Ã©tÃ© rechargÃ©s.");
+            notifySuccessMessage("Les pointages liés à la feuille de temps ont été rechargés.");
         } catch (error: unknown) {
             notifyErrorMessage(extractApiErrorMessage(error));
         }
@@ -181,13 +181,13 @@ export default function TimesheetDetailsPage() {
                     timeEntryId: editTimeEntry.id,
                     data: p_data,
                 });
-                notifySuccessMessage("Le pointage lie a la feuille de temps a ete modifie.");
+                notifySuccessMessage("Le pointage lié à la feuille de temps a été modifié.");
             } else {
                 await addTimesheetTimeEntry({
                     timesheetId: timesheet.id,
                     data: p_data,
                 });
-                notifySuccessMessage("Le pointage a ete ajoute a la feuille de temps.");
+                notifySuccessMessage("Le pointage a été ajouté à la feuille de temps.");
             }
 
             handleCloseTimeEntryForm();
@@ -210,7 +210,7 @@ export default function TimesheetDetailsPage() {
                 timesheetId: timesheet.id,
                 timeEntryId: timeEntryToRemove.id,
             });
-            notifySuccessMessage("Le pointage a ete retire de la feuille de temps.");
+            notifySuccessMessage("Le pointage a été retiré de la feuille de temps.");
             setTimeEntryToRemove(null);
         } catch (error: unknown) {
             notifyErrorMessage(extractApiErrorMessage(error));
@@ -276,7 +276,7 @@ export default function TimesheetDetailsPage() {
         >
             {timesheet && (
                 <GenericPageLayout
-                    title="DÃ©tail de la feuille de temps"
+                    title="Détail de la feuille de temps"
                     onDeleteClick={canDelete ? handleDeleteClick : undefined}
                 >
                     <Paper sx={{ p: 3, mb: 3 }}>
@@ -300,7 +300,7 @@ export default function TimesheetDetailsPage() {
                                     {`${timesheet.employeeFirstName} ${timesheet.employeeLastName}`}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    {`PÃ©riode : ${formatPeriodDate(timesheet.periodStart)} â€“ ${formatPeriodDate(timesheet.periodEnd)}`}
+                                    {`Période : ${formatPeriodDate(timesheet.periodStart)} – ${formatPeriodDate(timesheet.periodEnd)}`}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     {`Total : ${formatHours(totalHours)}`}
@@ -380,7 +380,7 @@ export default function TimesheetDetailsPage() {
                         )}
                     </Paper>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        Pointages liÃ©s
+                        Pointages liés
                     </Typography>
                     <CustomDataGrid
                         rows={timesheet.timeEntries}
@@ -407,7 +407,7 @@ export default function TimesheetDetailsPage() {
                     />
                     <FormModal
                         open={timeEntryToRemove !== null}
-                        title="Retirer le pointage?"
+                        title="Retirer le pointage ?"
                         onClose={() => setTimeEntryToRemove(null)}
                         onConfirmClick={() => {
                             void handleConfirmRemoveTimeEntry();
@@ -417,7 +417,7 @@ export default function TimesheetDetailsPage() {
                     >
                         <Typography variant="body1" sx={{ color: "text.secondary" }}>
                             Le pointage restera disponible dans les pointages, mais ne sera plus
-                            lie a cette feuille de temps.
+                            lié à cette feuille de temps.
                         </Typography>
                     </FormModal>
                 </GenericPageLayout>
@@ -494,19 +494,19 @@ function TimesheetTimeEntryForm({
             newErrors.date = "La date est requise.";
             isValid = false;
         } else if (date < timesheet.periodStart || date > timesheet.periodEnd) {
-            newErrors.date = "La date doit etre dans la periode de la feuille.";
+            newErrors.date = "La date doit être dans la période de la feuille.";
             isValid = false;
         }
 
         if (!startTime) {
-            newErrors.startTime = "L'heure de debut est requise.";
+            newErrors.startTime = "L'heure de début est requise.";
             isValid = false;
         }
 
         const normalizedStart: string = startTime ? normalizeTimeToHHmm(startTime) : "";
         const normalizedEnd: string = endTime.trim().length > 0 ? normalizeTimeToHHmm(endTime) : "";
         if (normalizedStart && normalizedEnd && normalizedEnd <= normalizedStart) {
-            newErrors.endTime = "L'heure de fin doit etre posterieure a l'heure de debut.";
+            newErrors.endTime = "L'heure de fin doit être postérieure à l'heure de début.";
             isValid = false;
         }
 
@@ -541,7 +541,7 @@ function TimesheetTimeEntryForm({
         >
             <TextField
                 fullWidth
-                label="Employe"
+                label="Employé"
                 value={`${timesheet.employeeFirstName} ${timesheet.employeeLastName}`}
                 disabled
                 sx={{ mb: 2 }}
@@ -563,7 +563,7 @@ function TimesheetTimeEntryForm({
                 helperText={errors.date}
             />
             <TimeSelectField
-                label="Heure de debut"
+                label="Heure de début"
                 value={startTime}
                 onChange={setStartTime}
                 required

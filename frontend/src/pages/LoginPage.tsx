@@ -5,6 +5,7 @@ import apiClient from "../api/apiClient";
 import AnimatedLogin from "../components/animated-login";
 import { ROUTE_DASHBOARD } from "../data/routeNames";
 import { useAuth } from "../context/AuthContext";
+import { AUTH_URL } from "../api/apiBaseUrl";
 
 type LoginResponseBody = {
 	token?: string;
@@ -25,7 +26,7 @@ export default function LoginPage() {
 		setError("");
 		try {
 			const response = await apiClient.post<LoginResponseBody>(
-				"/auth/login",
+				`${AUTH_URL}/api/auth/login`,
 				{
 					email: submittedEmail,
 					password: submittedPassword,

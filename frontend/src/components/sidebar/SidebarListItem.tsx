@@ -43,6 +43,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import PersonPinIcon from '@mui/icons-material/PersonPin';
+import { ENTITY_TYPES } from '../../permissions/permissions';
+import { usePermissions } from '../../permissions/usePermissions';
 
 
 interface SidebarListItemProps {
@@ -107,30 +109,51 @@ const SidebarListItem = ({ text, icon, pathTo, matchPrefix = true }: SidebarList
 
 export const DashboardListItem = () => {
     return (
-        <SidebarListItem text={"Tableau de bord"} icon={<HomeIcon />} pathTo={ROUTE_DASHBOARD} matchPrefix={false} />
+        <SidebarListItem
+            text={"Tableau de bord"}
+            icon={<HomeIcon />}
+            pathTo={ROUTE_DASHBOARD}
+            matchPrefix={false}
+        />
     );
 }
 
 export const CatalogListItem = () => {
-    return (
-        <SidebarListItem text={"Catalogue"} icon={<ShoppingBagIcon />} pathTo={ROUTE_CATALOGUE} />
+    const { canRead } = usePermissions(ENTITY_TYPES.ITEM);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Catalogue"}
+            icon={<ShoppingBagIcon />}
+            pathTo={ROUTE_CATALOGUE}
+        />
     )
 }
 
-export const ProfileListItem = () => {
-    return (
-        <SidebarListItem text={"Mon profil"} icon={<AccountBoxIcon />} pathTo={ROUTE_MY_PROFILE} />
+export const MyProfileListItem = () => {
+    const { canRead } = usePermissions(ENTITY_TYPES.ME);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Mon profil"}
+            icon={<AccountBoxIcon />}
+            pathTo={ROUTE_MY_PROFILE}
+        />
     )
 }
 
 export const LocationsListItem = () => {
-    return (
-        <SidebarListItem text={"Succursales"} icon={<StoreIcon />} pathTo={ROUTE_LOCATIONS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.LOCATION);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Succursales"}
+            icon={<StoreIcon />}
+            pathTo={ROUTE_LOCATIONS}
+        />
     )
 }
 
 export const HRListItem = () => {
-    return (
+    const { canRead } = usePermissions(ENTITY_TYPES.HR_DASHBOARD);
+    if (canRead) return (
         <SidebarListItem
             text={"Accueil RH"}
             icon={<GroupsIcon />}
@@ -141,73 +164,128 @@ export const HRListItem = () => {
 }
 
 export const JobPositionsListItem = () => {
-    return (
-        <SidebarListItem text={"Postes"} icon={<WorkOutlineIcon />} pathTo={ROUTE_JOB_POSITIONS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.JOB_POSITION)
+    if (canRead) return (
+        <SidebarListItem
+            text={"Postes"}
+            icon={<WorkOutlineIcon />}
+            pathTo={ROUTE_JOB_POSITIONS}
+        />
     )
 }
 
 export const EmployeeProfilesListItem = () => {
-    return (
-        <SidebarListItem text={"Employés"} icon={<PeopleIcon />} pathTo={ROUTE_EMPLOYEE_PROFILES} />
+    const { canRead } = usePermissions(ENTITY_TYPES.EMPLOYEE_PROFILE);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Employés"}
+            icon={<PeopleIcon />}
+            pathTo={ROUTE_EMPLOYEE_PROFILES}
+        />
     )
 }
 
 export const UsersListItem = () => {
-    return (
-        <SidebarListItem text={"Utilisateurs"} icon={<ManageAccountsIcon />} pathTo={ROUTE_LIST_USERS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.USER);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Utilisateurs"}
+            icon={<ManageAccountsIcon />}
+            pathTo={ROUTE_LIST_USERS}
+        />
     )
 }
 
 export const EmploymentContractsListItem = () => {
-    return (
-        <SidebarListItem text={"Contrats de travail"} icon={<AssignmentIndIcon />} pathTo={ROUTE_EMPLOYMENT_CONTRACTS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.EMPLOYMENT_CONTRACT);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Contrats de travail"}
+            icon={<AssignmentIndIcon />}
+            pathTo={ROUTE_EMPLOYMENT_CONTRACTS}
+        />
     )
 }
 
 export const LeaveRequestsListItem = () => {
-    return (
-        <SidebarListItem text={"Congés"} icon={<EventBusyIcon />} pathTo={ROUTE_LEAVE_REQUESTS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.LEAVE_REQUEST);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Congés"}
+            icon={<EventBusyIcon />}
+            pathTo={ROUTE_LEAVE_REQUESTS}
+        />
     )
 }
 
 export const SchedulesListItem = () => {
-    return (
-        <SidebarListItem text={"Planification"} icon={<CalendarMonthIcon />} pathTo={ROUTE_SCHEDULES} />
+    const { canRead } = usePermissions(ENTITY_TYPES.SCHEDULED_SHIFT);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Planification"}
+            icon={<CalendarMonthIcon />}
+            pathTo={ROUTE_SCHEDULES}
+        />
     )
 }
 
 export const TimeEntriesListItem = () => {
-    return (
-        <SidebarListItem text={"Pointages"} icon={<AccessTimeIcon />} pathTo={ROUTE_TIME_ENTRIES} />
+    const { canRead } = usePermissions(ENTITY_TYPES.TIME_ENTRY);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Pointages"}
+            icon={<AccessTimeIcon />}
+            pathTo={ROUTE_TIME_ENTRIES}
+        />
     )
 }
 
 export const TimesheetsListItem = () => {
-    return (
-        <SidebarListItem text={"Feuilles de temps"} icon={<DescriptionIcon />} pathTo={ROUTE_TIMESHEETS} />
+    const { canRead } = usePermissions(ENTITY_TYPES.TIMESHEET);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Feuilles de temps"}
+            icon={<DescriptionIcon />}
+            pathTo={ROUTE_TIMESHEETS}
+        />
     )
 }
 
 export const PayrollListItem = () => {
-    return (
-        <SidebarListItem text={"Paie"} icon={<PaymentsIcon />} pathTo={ROUTE_PAYROLL} />
+    const { canRead } = usePermissions(ENTITY_TYPES.PAYROLL);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Paie"}
+            icon={<PaymentsIcon />}
+            pathTo={ROUTE_PAYROLL}
+        />
     )
 }
 
 export const CategoryListItem = () => {
-    return (
-        <SidebarListItem text={"Catégories"} icon={<CategoryIcon />} pathTo={ROUTE_CATEGORY} />
+    const { canRead } = usePermissions(ENTITY_TYPES.CATEGORY);
+    if (canRead) return (
+        <SidebarListItem
+            text={"Catégories"}
+            icon={<CategoryIcon />}
+            pathTo={ROUTE_CATEGORY}
+        />
     )
 }
 
 export const IRListItem = () => {
     return (
-        <SidebarListItem text={"Gestion d'inventaire"} icon={<InventoryIcon />} pathTo={ROUTE_IR} />
+        <SidebarListItem
+            text={"Gestion d'inventaire"}
+            icon={<InventoryIcon />}
+            pathTo={ROUTE_IR}
+        />
     )
 }
 
 export const AuthorListItem = () => {
-    return (
+    const { canRead } = usePermissions(ENTITY_TYPES.AUTHOR);
+    if (canRead) return (
         <SidebarListItem
             text={"Auteurs"}
             icon={<MenuBookIcon />}
@@ -217,7 +295,8 @@ export const AuthorListItem = () => {
 }
 
 export const UserRolesListItem = () => {
-    return (
+    const { canRead } = usePermissions(ENTITY_TYPES.USER_ROLE);
+    if (canRead) return (
         <SidebarListItem
             text={"Roles"}
             icon={<FaceIcon />}

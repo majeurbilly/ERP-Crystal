@@ -12,10 +12,6 @@ describe("Phase 1 — apiBaseUrl", () => {
         expect(USE_MOCK_API).toBe(false);
     });
 
-    it("les URLs API sont relatives pour le proxy Nginx en production", () => {
-        expect(API_URL).toBe("/api");
-    });
-
     it("les endpoints RH pointent vers l'API .NET", () => {
         expect(API_EMPLOYEE_PROFILES_URL).toBe(`${API_URL}/employee-profiles`);
         expect(API_SCHEDULES_URL).toBe(`${API_URL}/schedules`);

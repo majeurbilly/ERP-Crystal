@@ -36,7 +36,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AppLayout from "./components/layouts/AppLayout";
 import HRPage from "./pages/hr/HRPage";
 import MyProfilePage from "./pages/MyProfilePage";
-import { AuthenticatedExclusiveRoute, EmploymentContractExclusiveRoute, HrDashboardExclusiveRoute, PayrollExclusiveRoute, TimesheetExclusiveRoute } from "./components/routes/RestrictedRoute";
+import { AuthenticatedExclusiveRoute } from "./components/routes/RestrictedRoute";
 import UsersListPage from "./pages/hr/users/UsersListPage";
 import UserProfilePage from "./pages/hr/users/UserProfilePage";
 import CatalogPage from "./pages/inventory/catalog/CatalogPage";
@@ -71,6 +71,8 @@ import { PermissionProvider } from "./permissions/AppPermissionContext";
 import MySpacePage from "./pages/MySpacePage";
 import EmployeeProfilesPage from "./pages/hr/employee-profiles/EmployeeProfilesPage";
 import AuthorDetailsPage from "./pages/inventory/authors/AuthorDetails";
+import { PermissionRoute } from "./components/routes/PermissionRoute";
+import { ENTITY_TYPES } from "./permissions/permissions";
 
 function App() {
 	const { user, isAuthenticated } = useAuth();
@@ -87,49 +89,98 @@ function App() {
 							<Route element={<AuthenticatedExclusiveRoute />}>
 								<Route element={<AppLayout />}>
 									<Route path={ROUTE_DASHBOARD} element={<DashboardPage />} />
-									<Route path={ROUTE_MY_PROFILE} element={<MyProfilePage />} />
-									<Route path={ROUTE_MON_ESPACE} element={<MySpacePage />} />
-									<Route path={ROUTE_CATALOGUE} element={<CatalogPage />} />
-									<Route path={ROUTE_ITEM_DETAILS} element={<ItemDetailsPage />} />
-									<Route path={ROUTE_LOCATIONS} element={<LocationsPage />} />
-									<Route path={ROUTE_LOCATION_INVENTORY} element={<LocationInventoryQuantityPage />} />
-									<Route path={ROUTE_LOCATION_DETAILS} element={<LocationDetailsPage />} />
-									<Route path={ROUTE_CATEGORY} element={<CategoriesListPage />} />
-									<Route path={ROUTE_CATEGORY_DETAILS} element={<CategoryDetailPage />} />
-									<Route path={ROUTE_LIST_AUTHORS} element={<AuthorPage />} />
-									<Route path={ROUTE_AUTHOR_DETAILS} element={<AuthorDetailsPage />} />
-									<Route path={ROUTE_LIST_USER_ROLES} element={<UserRoleListPage />} />
-									<Route path={ROUTE_USER_ROLE_DETAILS} element={<UserRoleDetailsPage />} />
-									<Route path={ROUTE_LEAVE_REQUEST_DETAILS} element={<LeaveRequestDetailsPage />} />
-									<Route element={<EmploymentContractExclusiveRoute />}>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.ME} />}>
+										<Route path={ROUTE_MY_PROFILE} element={<MyProfilePage />} />
+										<Route path={ROUTE_MON_ESPACE} element={<MySpacePage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.ITEM} />}>
+										<Route path={ROUTE_CATALOGUE} element={<CatalogPage />} />
+										<Route path={ROUTE_ITEM_DETAILS} element={<ItemDetailsPage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.LOCATION} />}>
+										<Route path={ROUTE_LOCATIONS} element={<LocationsPage />} />
+										<Route path={ROUTE_LOCATION_DETAILS} element={<LocationDetailsPage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.INVENTORY_QUANTITY} />}>
+										<Route path={ROUTE_LOCATION_INVENTORY} element={<LocationInventoryQuantityPage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.CATEGORY} />}>
+										<Route path={ROUTE_CATEGORY} element={<CategoriesListPage />} />
+										<Route path={ROUTE_CATEGORY_DETAILS} element={<CategoryDetailPage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.AUTHOR} />}>
+										<Route path={ROUTE_LIST_AUTHORS} element={<AuthorPage />} />
+										<Route path={ROUTE_AUTHOR_DETAILS} element={<AuthorDetailsPage />} />
+									</Route>
+
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.EMPLOYMENT_CONTRACT} />}>
 										<Route path={ROUTE_EMPLOYMENT_CONTRACTS} element={<EmploymentContractsPage />} />
 									</Route>
 
-									<Route element={<PayrollExclusiveRoute />}>
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.PAYROLL} />}>
 										<Route path={ROUTE_PAYROLL} element={<PayrollPage />} />
 									</Route>
 
-									<Route element={<TimesheetExclusiveRoute />}>
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.TIMESHEET} />}>
 										<Route path={ROUTE_TIMESHEET_DETAILS} element={<TimesheetDetailsPage />} />
 									</Route>
 
-									<Route element={<HrDashboardExclusiveRoute />} >
+									<Route element={<PermissionRoute entityType={ENTITY_TYPES.HR_DASHBOARD} />}>
 										<Route path={ROUTE_HR} element={<HRPage />} />
-										<Route path={ROUTE_JOB_POSITIONS} element={<JobPositionsPage />} />
-										<Route path={ROUTE_EMPLOYEE_PROFILES} element={<EmployeeProfilesPage />} />
-										<Route path={ROUTE_EMPLOYEE_PROFILE_DETAILS} element={<EmployeeProfileDetailsPage />} />
-										<Route path={ROUTE_EMPLOYMENT_CONTRACTS} element={<EmploymentContractsPage />} />
-										<Route path={ROUTE_LEAVE_REQUESTS} element={<LeaveRequestsPage />} />
-										<Route path={ROUTE_SCHEDULES} element={<SchedulesPage />} />
-										<Route path={ROUTE_TIME_ENTRIES} element={<TimeEntriesPage />} />
-										<Route path={ROUTE_TIMESHEETS} element={<TimesheetsPage />} />
-										<Route path={ROUTE_TIMESHEET_DETAILS} element={<TimesheetDetailsPage />} />
-										<Route path={ROUTE_PAYROLL} element={<PayrollPage />} />
-										<Route path={ROUTE_LIST_USERS} element={<UsersListPage />} />
-										<Route path={ROUTE_USER_PROFILE} element={<UserProfilePage />} />
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.USER_ROLE} />}>
+											<Route path={ROUTE_LIST_USER_ROLES} element={<UserRoleListPage />} />
+											<Route path={ROUTE_USER_ROLE_DETAILS} element={<UserRoleDetailsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.JOB_POSITION} />}>
+											<Route path={ROUTE_JOB_POSITIONS} element={<JobPositionsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.EMPLOYEE_PROFILE} />}>
+											<Route path={ROUTE_EMPLOYEE_PROFILES} element={<EmployeeProfilesPage />} />
+											<Route path={ROUTE_EMPLOYEE_PROFILE_DETAILS} element={<EmployeeProfileDetailsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.EMPLOYMENT_CONTRACT} />}>
+											<Route path={ROUTE_EMPLOYMENT_CONTRACTS} element={<EmploymentContractsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.LEAVE_REQUEST} />}>
+											<Route path={ROUTE_LEAVE_REQUESTS} element={<LeaveRequestsPage />} />
+											<Route path={ROUTE_LEAVE_REQUEST_DETAILS} element={<LeaveRequestDetailsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.SCHEDULED_SHIFT} />}>
+											<Route path={ROUTE_SCHEDULES} element={<SchedulesPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.TIME_ENTRY} />}>
+											<Route path={ROUTE_TIME_ENTRIES} element={<TimeEntriesPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.TIMESHEET} />}>
+											<Route path={ROUTE_TIMESHEETS} element={<TimesheetsPage />} />
+											<Route path={ROUTE_TIMESHEET_DETAILS} element={<TimesheetDetailsPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.PAYROLL} />}>
+											<Route path={ROUTE_PAYROLL} element={<PayrollPage />} />
+										</Route>
+
+										<Route element={<PermissionRoute entityType={ENTITY_TYPES.USER} />}>
+											<Route path={ROUTE_LIST_USERS} element={<UsersListPage />} />
+											<Route path={ROUTE_USER_PROFILE} element={<UserProfilePage />} />
+										</Route>
+
 										<Route path={ROUTE_IR} element={<IRPage />} />
 									</Route>
-
 									<Route path="*" element={<NotFoundPage />} />
 								</Route>
 							</Route>

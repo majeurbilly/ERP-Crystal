@@ -74,7 +74,6 @@ export default function JobPositionForm({
             isValid = false;
         }
 
-
         setErrors(newErrors);
         return isValid;
     };
@@ -97,13 +96,13 @@ export default function JobPositionForm({
                     id: String(editJobPosition.id),
                     data: formData,
                 });
-                notifySuccessMessage(`Le poste Â« ${formData.name} Â» a Ã©tÃ© modifiÃ© avec succÃ¨s.`);
+                notifySuccessMessage(`Le poste « ${formData.name} » a été modifié avec succès.`);
                 if (setEditJobPosition) {
                     setEditJobPosition(null);
                 }
             } else {
                 await addJobPosition(formData);
-                notifySuccessMessage(`Le poste Â« ${formData.name} Â» a Ã©tÃ© ajoutÃ© avec succÃ¨s.`);
+                notifySuccessMessage(`Le poste « ${formData.name} » a été ajouté avec succès.`);
             }
             handleClose();
         } catch (error: unknown) {

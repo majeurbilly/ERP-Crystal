@@ -1,3 +1,7 @@
+# =============================================================================
+# Global — monorepo Crystal ERP
+# =============================================================================
+
 # Système d'exploitation
 .DS_Store
 .DS_Store?
@@ -7,29 +11,84 @@
 ehthumbs.db
 Thumbs.db
 
-# Éditeurs de code (VS Code, Visual Studio, Rider)
-.vscode/
-.idea/
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
+# Fichiers d'environnement
+.env
 
 # Nix
 result
 result-*
 .direnv
 
-# Fichiers d'environnement globaux
-.env
-
+# Projet
 .cursorrules
 
-# Playwright E2E
-e2e/fixtures/storage/*.json
-playwright-report/
-test-results/
-blob-report/
+# Logs (tout le dépôt)
+*.log
+
+# Dépendances npm à la racine (legacy)
 node_modules/
 package-lock.json
+
+# =============================================================================
+# IDE — commun
+# =============================================================================
+
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# =============================================================================
+# Backend — .NET / EF Core
+# =============================================================================
+
+# Compilation
+backend/**/[Bb]in/
+backend/**/[Oo]bj/
+backend/TestResults/
+
+# Caches NuGet
+backend/project.lock.json
+backend/project.fragment.lock.json
+backend/artifacts/
+
+# Configuration locale (sécurité)
+backend/**/appsettings.Development.json
+backend/**/appsettings.Local.json
+backend/**/secrets.json
+
+# Visual Studio
+backend/.vs/
+
+# Migrations EF (générées localement via start.sh / dotnet ef)
+backend/Crystal.Infrastructure/Migrations/
+
+# =============================================================================
+# Frontend — React / Vite
+# =============================================================================
+
+frontend/logs/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# VS Code : ignorer le dossier sauf réglages partagés
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+!frontend/.vscode/settings.json
+
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+frontend/docs/
+frontend/dbBackup.json

@@ -52,13 +52,6 @@
             exit 1
           fi
         '';
-
-        # Chromium Playwright empaqueté par nixpkgs (évite libasound.so.2 manquante, etc.)
-        playwrightEnvScript = ''
-          export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
-          export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
-          export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-        '';
       in {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
@@ -72,7 +65,6 @@
             postgresql
             curl
             cacert
-            playwright-driver.browsers
           ];
 
           shellHook = ''
@@ -80,7 +72,6 @@
             export PATH="$DOTNET_ROOT/bin:$PATH"
             export ASPNETCORE_ENVIRONMENT=Development
             export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-            ${playwrightEnvScript}
 
             # Docker Desktop (WSL) : activer l'intégration WSL pour cette distro
             if [ ! -S /var/run/docker.sock ] && [ -S "$HOME/.docker/run/docker.sock" ]; then
@@ -108,10 +99,8 @@
             echo "  docker-down      — arrêter les conteneurs"
             echo "  backend-test     — dotnet test (solution complète)"
             echo "  frontend-test    — Vitest (frontend)"
-            echo "  e2e-install      — npm + navigateur Playwright"
-            echo "  e2e-test         — Playwright (stack Docker requise)"
-            echo "  test-all         — backend + frontend (sans E2E)"
-            echo "  verify           — docker-up-wait + backend + frontend + E2E"
+            echo "  test-all         — backend + frontend"
+            echo "  verify           — docker-up-wait + backend + frontend"
           '';
         };
 
@@ -176,27 +165,6 @@
             pnpm test --run
           '';
 
-          e2e-install = mkApp "e2e-install" ''
-            set -euo pipefail
-            cd "${root}"
-            ${playwrightEnvScript}
-            npm install
-            echo "Navigateur Chromium : nixpkgs (PLAYWRIGHT_BROWSERS_PATH)"
-          '';
-
-          e2e-test = mkApp "e2e-test" ''
-            set -euo pipefail
-            cd "${root}"
-            ${playwrightEnvScript}
-            ${dockerCheckScript}
-            if ! curl -sf http://localhost:3000 -o /dev/null 2>/dev/null; then
-              echo "La stack n'est pas démarrée. Lancez : nix run .#docker-up-wait"
-              exit 1
-            fi
-            npm install
-            npm run e2e
-          '';
-
           test-all = mkApp "test-all" ''
             set -euo pipefail
             cd "${root}/backend"
@@ -222,13 +190,7 @@
             pnpm install --frozen-lockfile
             pnpm test --run
             echo ""
-            echo "=== Tests E2E (Playwright) ==="
-            cd "${root}"
-            ${playwrightEnvScript}
-            npm install
-            npm run e2e
-            echo ""
-            echo "=== Vérification sprint 4 terminée ==="
+            echo "=== Vérification terminée ==="
           '';
         };
 

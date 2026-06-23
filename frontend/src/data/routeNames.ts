@@ -32,7 +32,7 @@ export const ROUTE_LOCATION_INVENTORY: string = `${ROUTE_LOCATION_DETAILS}/inven
 export function buildLocationInventoryPath(p_id: number | string): string {
     return ROUTE_LOCATION_INVENTORY.replace(":id", String(p_id));
 }
-export const ROUTE_LIST_AUTHORS: string = '/authors'
+export const ROUTE_LIST_AUTHORS: string = '/auteurs'
 export const ROUTE_LIST_USER_ROLES: string = "/roles";
 export const ROUTE_USER_ROLE_DETAILS: string = `${ROUTE_LIST_USER_ROLES}/:id`
 export const ROUTE_LIST_PERMISSION_ENTITIES: string = `/permission-entities`
