@@ -85,7 +85,39 @@ Une fois les fichiers poussés sur `main` et les secrets configurés, l'applicat
 | **Path** | `k8s` |
 | **Tool** | Kustomize (auto-détecté) |
 
-Le Job `crystal-migration` est annoté `argocd.argoproj.io/hook: PreSync` : les migrations EF s'exécutent automatiquement à chaque synchronisation, avant le déploiement du backend.
+Le Job `crystal-migration` utilise des **sync-waves** ArgoCD pour garantir l'ordre :
+
+| Vague | Ressources |
+|-------|------------|
+| `0` | PostgreSQL (Service + StatefulSet) |
+| `1` | Job de migration EF (`--migrate`) |
+| `2` | Backend (PVC, Service, Deployment) |
+| `3` | Frontend, Ingress, ConfigMap nginx |
+
+> **Important :** ne pas utiliser `PreSync` pour la migration — ce hook s'exécute *avant* PostgreSQL et provoque `nc: bad address 'crystal-postgres'`.
+
+## Dépannage
+
+### `nc: bad address 'crystal-postgres'` / aucun Service dans le namespace
+
+Cause typique : le Job de migration (hook `PreSync`) démarre avant que PostgreSQL ne soit déployé.
+
+```bash
+# 1. Vérifier que les secrets existent
+kubectl get secret -n crystal-erp
+
+# 2. Supprimer le Job bloqué
+kubectl delete job crystal-migration -n crystal-erp --ignore-not-found
+
+# 3. Forcer une resynchronisation ArgoCD (UI : REFRESH puis SYNC)
+```
+
+Après correction, vous devriez voir :
+
+```bash
+kubectl get svc -n crystal-erp
+# crystal-postgres, crystal-backend, crystal-frontend
+```
 
 ## Fichiers
 
@@ -102,7 +134,7 @@ Le Job `crystal-migration` est annoté `argocd.argoproj.io/hook: PreSync` : les 
 | `frontend-deployment.yaml` | SPA React servie par nginx |
 | `frontend-service.yaml` | Service ClusterIP frontend |
 | `ingress.yaml` | Routage `/api`, `/images` → backend ; `/` → frontend |
-| `migration-job.yaml` | Migrations EF Core (`--migrate`) avec hook ArgoCD PreSync |
+| `migration-job.yaml` | Migrations EF Core (`--migrate`), sync-wave `1` |
 | `kustomization.yaml` | Assemblage Kustomize + remplacement d'images |
 | `argocd/application.yaml` | Déclaration Application ArgoCD |
 

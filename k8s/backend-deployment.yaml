@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: crystal-backend
     app.kubernetes.io/part-of: crystal-erp
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   replicas: 1
   selector:
@@ -25,8 +27,9 @@ spec:
             - sh
             - -c
             - |
-              until nc -z crystal-postgres 5432; do
-                echo "En attente de PostgreSQL..."
+              POSTGRES_HOST="crystal-postgres.crystal-erp.svc.cluster.local"
+              until nc -z "${POSTGRES_HOST}" 5432; do
+                echo "En attente de PostgreSQL (${POSTGRES_HOST})..."
                 sleep 2
               done
       containers:

@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: crystal-postgres
     app.kubernetes.io/part-of: crystal-erp
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   serviceName: crystal-postgres
   replicas: 1

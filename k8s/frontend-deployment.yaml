@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: crystal-frontend
     app.kubernetes.io/part-of: crystal-erp
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   replicas: 1
   selector:

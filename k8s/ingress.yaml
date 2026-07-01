@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: crystal-erp
     app.kubernetes.io/part-of: crystal-erp
   annotations:
+    argocd.argoproj.io/sync-wave: "3"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
   ingressClassName: nginx
