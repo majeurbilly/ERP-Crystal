@@ -159,9 +159,17 @@ builder.Services.AddAuthentication(p_options =>
 
 WebApplication app = builder.Build();
 
+bool migrateOnly = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
+
 using (IServiceScope scope = app.Services.CreateScope())
 {
     CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
+
+    if (migrateOnly)
+    {
+        await dbContext.Database.MigrateAsync().ConfigureAwait(false);
+        return;
+    }
 
     if (app.Environment.IsDevelopment())
     {

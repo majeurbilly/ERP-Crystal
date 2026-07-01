@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crystal-ingress
+  namespace: crystal-erp
+  labels:
+    app.kubernetes.io/name: crystal-erp
+    app.kubernetes.io/part-of: crystal-erp
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: crystal.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: crystal-backend
+                port:
+                  number: 8080
+          - path: /images
+            pathType: Prefix
+            backend:
+              service:
+                name: crystal-backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: crystal-frontend
+                port:
+                  number: 80

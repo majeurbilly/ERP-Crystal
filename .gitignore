@@ -13,6 +13,7 @@ Thumbs.db
 
 # Fichiers d'environnement
 .env
+k8s/secrets.yaml
 
 # Nix
 result
