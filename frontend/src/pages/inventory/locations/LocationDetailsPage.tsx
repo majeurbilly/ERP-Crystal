@@ -64,6 +64,7 @@ export default function LocationDetailsPage() {
     const { openConfirmDeleteWindow } = useDeleteDialog();
     const { openForm } = useFormContainer();
     const { deleteLocation: deleteLocationMutation, isDeletingLocation } = useLocationMutations();
+    const { canRead: canReadInventory, canUpdate: canUpdateInventory } = usePermissions(ENTITY_TYPES.INVENTORY_QUANTITY);
 
     const locationQuery = useQuery({
         queryKey: locationsCacheKey.details(id!),
@@ -222,34 +223,41 @@ export default function LocationDetailsPage() {
                             </Grid>
 
                             <Grid size={{ xs: 12, md: 5 }}>
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2.5,
-                                        borderRadius: 2,
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 2,
-                                    }}
-                                >
-                                    <Typography variant="h6">
-                                        Actions rapides
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Consultez les stocks, ajustez les quantités ou ajoutez de nouveaux articles au rayon de cette succursale.
-                                    </Typography>
-
-                                    <Button
+                                {canReadInventory &&
+                                    <Paper
                                         variant="outlined"
-                                        startIcon={<Inventory2OutlinedIcon />}
-                                        endIcon={<ArrowForwardIcon />}
-                                        onClick={handleOpenInventory}
-                                        sx={{ mt: "auto", justifyContent: "space-between", py: 1.25 }}
+                                        sx={{
+                                            p: 2.5,
+                                            borderRadius: 2,
+                                            height: "100%",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 2,
+                                        }}
                                     >
-                                        Gérer l'inventaire
-                                    </Button>
-                                </Paper>
+                                        <Typography variant="h6">
+                                            Actions rapides
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {canUpdateInventory
+                                                ? "Consultez les stocks, ajustez les quantités ou ajoutez de nouveaux articles au rayon de cette succursale."
+                                                : "Consultez les stocks"
+                                            }
+                                        </Typography>
+
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Inventory2OutlinedIcon />}
+                                            endIcon={<ArrowForwardIcon />}
+                                            onClick={handleOpenInventory}
+                                            sx={{ mt: "auto", justifyContent: "space-between", py: 1.25 }}
+                                        >
+                                            {canUpdateInventory
+                                                ? "Gérer l'inventaire"
+                                                : "Consulter l'inventaire"}
+                                        </Button>
+                                    </Paper>
+                                }
                             </Grid>
                         </Grid>
                     </Stack>

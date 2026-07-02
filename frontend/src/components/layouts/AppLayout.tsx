@@ -14,7 +14,7 @@ const AppLayout = () => {
 
     useEffect(() => {
         if (location.state?.unauthorized) {
-            notifyErrorMessage("pas permission mon coco");
+            notifyErrorMessage("Vous n'avez pas l'autorisation d'accéder à ce contenu.");
             window.history.replaceState({}, document.title);
         }
     }, [location]);

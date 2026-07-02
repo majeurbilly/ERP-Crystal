@@ -1,98 +1,293 @@
-# 🐳 Guide d'infrastructure Docker (Équipe String.Empty)
+# ERP Crystal
 
-Pour garantir que notre code fonctionne exactement de la même manière sur nos PC et en production, nous utilisons Docker. 
+Application web de gestion pour la **Librairie Crystal** : inventaire multi-succursales et ressources humaines (horaires, congés, feuilles de temps, paie). Projet réalisé par l'équipe **String.Empty**.
 
-Oubliez les commandes manuelles compliquées : l'environnement local a été entièrement automatisé pour vous permettre de coder sans vous soucier de l'infrastructure !
+La méthode recommandée pour lancer le projet est **Docker** : base de données, API et interface démarrent ensemble avec une seule commande.
 
 ---
 
-## 🚀 1. Développer en local (Le Quotidien)
+## Fonctionnalités
 
-Nous utilisons maintenant **Docker Compose**. Un seul fichier lance le Frontend, le Backend, la Base de données et nos outils de développement simultanément.
+### Inventaire
 
-### Comment lancer le projet complet :
-1. Ouvre ton terminal à la **racine du projet** (pas dans `/backend` ni `/frontend`).
-2. Lance la commande magique :
-   ```bash
-   docker-compose up -d --build
-   // apres tu peux faire la commande de base
-   docker compose up -d
-   ```
-*(Le `-d` permet de lancer les conteneurs en arrière-plan pour que tu puisses continuer à utiliser ton terminal).*
+- Catalogue d'articles (livres et produits)
+- Catégories et auteurs
+- Succursales et stocks par emplacement
+- Rapport d'inventaire (IR)
 
-### 📍 Vos points d'accès locaux :
-Une fois la commande lancée, voici où trouver vos outils :
+### Ressources humaines
 
-| Service | URL locale | Notes |
-| :--- | :--- | :--- |
-| **💻 Frontend (Will)** | `http://localhost:3000` | Interface utilisateur (React/Vite). |
-| **⚙️ Backend (Anto)** | `http://localhost:8080` | L'API de l'ERP. |
-| **📖 Documentation API** | `http://localhost:8080/swagger` | Pour voir et tester les routes d'Anto en direct. |
-| **🗄️ Base de données** | `localhost:5432` | Accessible via DataGrip ou pgAdmin. |
+- Tableau de bord RH et métriques
+- Utilisateurs et rôles dynamiques (permissions granulaires)
+- Profils employés et postes
+- Contrats d'emploi
+- Demandes de congé
+- Planification des quarts de travail
+- Saisie des heures et feuilles de temps
+- Paie
+- Espace personnel (« Mon espace ») pour les employés
 
-### 🛠️ L'outil pgAdmin (Visualisation de la BD)
-Pour vous éviter de tout faire en ligne de commande, une interface web pour la base de données s'installe automatiquement avec le projet.
-* **URL :** `http://localhost:5050`
-* **Utilisateur :** `admin@crystal.com`
-* **Mot de passe :** `Pizzapizza123`
-*(Pour connecter le serveur la première fois dans l'interface, utilisez `db` comme nom d'hôte / Host name).*
+### Sécurité
+
+- Authentification JWT
+- Contrôle d'accès par rôle (Admin, Gérant, Assistant, Employé) avec permissions CASL côté frontend et backend
+
+---
+
+## Stack technique
 
 
-## 📤 2. Les Scripts d'Automatisation (DevOps)
+| Couche              | Technologies                                                         |
+| ------------------- | -------------------------------------------------------------------- |
+| **Frontend**        | React 19, TypeScript, Vite, MUI, React Query, CASL, Vitest           |
+| **Backend**         | ASP.NET Core 9, Entity Framework Core, PostgreSQL, Identity, Swagger |
+| **Infrastructure**  | Docker, Docker Compose, Nginx (reverse proxy), Azure Pipelines       |
+| **Base de données** | PostgreSQL 18                                                        |
 
-Quand vous avez terminé une grosse fonctionnalité et que les images doivent être mises à jour sur notre registre (Docker Hub), n'utilisez pas de commandes manuelles. 
 
-**Prérequis Windows :** Ces scripts doivent **obligatoirement** être exécutés dans **Git Bash**.
+---
 
-À la racine du projet, vous avez accès à 3 scripts selon vos besoins :
+## Structure du projet
 
-* `./build.sh` : Construit uniquement les images localement sur votre PC.
-* `./push.sh` : Envoie les images déjà construites vers le Docker Hub de l'équipe.
-* `./run-all.sh` : **[Recommandé]** Fait les deux étapes l'une après l'autre de façon 100% automatisée.
+```
+ERP-r/
+├── frontend/          # Interface React (Vite)
+├── backend/           # API .NET (Crystal.API, Core, Infrastructure, IntegrationTests)
+├── docker-compose.yaml
+├── docker-compose.override.yaml   # pgAdmin + variables de dev
+├── docker-compose.prod.yaml       # déploiement production
+├── build-image.sh                 # build des images Docker
+├── push-image.sh                  # push vers Docker Hub
+└── start.sh                       # réinitialisation complète (migrations + build)
+```
 
-*(Avant de pousser, assurez-vous d'être connecté à Docker Hub en tapant `docker login`).*
+---
 
-## 👤 Comptes de test disponibles
+## Prérequis
 
-Des comptes de démonstration sont automatiquement créés au démarrage du backend afin de faciliter les tests et le développement.
+1. **Git** — [git-scm.com](https://git-scm.com)
+2. **Docker Desktop** — [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
 
-| Rôle | Courriel | Mot de passe |
-|---|---|---|
-| 🔑 Admin | `admin@crystal.local` | `ValidPass1!a` |
-| 🧑‍💼 Gérant | `gerant@crystal.local` | `ValidPass1!a` |
-| 📦 Assistant | `assistant@crystal.local` | `ValidPass1!a` |
-| 👷 Employé | `employee@crystal.local` | `ValidPass1!a` |
+Vérifications :
 
-### 🔐 Authentification Swagger
+```bash
+git --version
+docker --version
+docker compose version
+```
 
-Pour tester les routes protégées :
+> **Sans Docker**, il est possible de lancer le backend avec le SDK .NET 9 et le frontend avec Node/pnpm, mais il faut installer **PostgreSQL** localement et aligner les URLs dans `frontend/src/api/apiBaseUrl.ts`. Pour une prise en main rapide, **Docker reste la voie la plus simple**.
 
-1. Aller sur : `http://localhost:8080/swagger`
-2. Utiliser la route de connexion (`/api/auth/login`)
-3. Utiliser le compte suivant :
-   ```json
+---
+
+## Démarrage rapide (Docker)
+
+### 1. Cloner le dépôt
+
+```bash
+git clone <URL_DU_DEPOT>
+mv ERP%20simplifi%C3%A9 ERP
+cd ERP
+```
+
+**Conseil :** si Git crée un dossier avec des caractères encodés dans le nom (ex. `ERP%20simplifi%C3%A9`), renommez-le en un nom court sans espaces (ex. `ERP`) pour éviter des problèmes de chemins.
+
+À la racine, vous devez voir les dossiers `frontend`, `backend` et les fichiers `docker-compose.yaml` / `docker-compose.override.yaml`.
+
+### 2. Lancer l'environnement
+
+À la **racine du projet** :
+
+```bash
+docker compose up -d --build
+```
+
+La première exécution peut prendre plusieurs minutes (téléchargement des images et compilation). Les fois suivantes :
+
+```bash
+docker compose up -d
+```
+
+### 3. Vérifier que tout tourne
+
+```bash
+docker compose ps
+```
+
+Services attendus : `db`, `backend`, `frontend`, `pgadmin`.
+
+---
+
+## Points d'accès
+
+
+| Service             | URL                                                            | Notes                                         |
+| ------------------- | -------------------------------------------------------------- | --------------------------------------------- |
+| **Application web** | [http://localhost:3000](http://localhost:3000)                 | Interface React servie par Nginx              |
+| **API (Swagger)**   | [http://localhost:8080/swagger](http://localhost:8080/swagger) | Documentation et tests des routes             |
+| **PostgreSQL**      | `localhost:5433`                                               | Port mappé depuis le conteneur (5432 interne) |
+| **pgAdmin**         | [http://localhost:5050](http://localhost:5050)                 | Administration visuelle de la BD              |
+
+
+Le frontend appelle l'API via le proxy Nginx (`/api` → backend). Swagger et les tests directs utilisent le port **8080**.
+
+### pgAdmin
+
+- **Courriel :** `admin@crystal.com`
+- **Mot de passe :** `Pizzapizza123`
+
+Pour connecter le serveur PostgreSQL dans pgAdmin :
+
+- **Hôte :** `db` (depuis pgAdmin dans Docker) ou `localhost` (depuis votre PC)
+- **Port :** `5432` (conteneur) ou `5433` (depuis votre PC)
+- **Utilisateur / base / mot de passe :** voir `docker-compose.yaml`
+
+---
+
+## Comptes de démonstration
+
+Des comptes sont créés automatiquement au démarrage du backend :
+
+
+| Rôle      | Courriel                  | Mot de passe   |
+| --------- | ------------------------- | -------------- |
+| Admin     | `admin@crystal.local`     | `ValidPass1!a` |
+| Gérant    | `gerant@crystal.local`    | `ValidPass1!a` |
+| Assistant | `assistant@crystal.local` | `ValidPass1!a` |
+| Employé   | `employee@crystal.local`  | `ValidPass1!a` |
+
+
+### Tester l'API via Swagger
+
+1. Ouvrir [http://localhost:8080/swagger](http://localhost:8080/swagger)
+2. Appeler `POST /api/auth/login` avec :
+  ```json
    {
-   "email": "admin@crystal.local",
-   "password": "ValidPass1!a"
+     "email": "admin@crystal.local",
+     "password": "ValidPass1!a"
    }
-   ```
-4. Copier le token JWT retourné
-5. Cliquer sur le bouton **Authorize** en haut à droite
-6. Entrer :
+  ```
+3. Copier le token JWT retourné
+4. Cliquer sur **Authorize** (en haut à droite)
+5. Entrer : `Bearer <votre_token>`
 
 ---
 
-## ⚠️ Notes techniques initiales (À lire une fois)
+## Arrêter l'environnement
 
-### Pour Will (Frontend - React / Vite)
-Si c'est la toute première fois que tu clones le projet sur ton PC, tu dois générer le squelette Vite autour du Dockerfile existant avant que Docker puisse le lire.
-1. Va dans le dossier `/frontend` et lance : `pnpm create vite . --template react-ts` *(Choisis "Ignore files and continue" si averti).*
-2. Lance `pnpm install` pour générer le `pnpm-lock.yaml`.
-3. Tu es prêt à utiliser le `docker compose up -d` !
+À la racine du projet :
 
-### Pour arrêter l'environnement
-Quand vous avez fini de travailler, à la racine du projet, tapez :
 ```bash
 docker compose down
 ```
-Cela éteint proprement tous les conteneurs de l'ERP. Vos données dans la base de données seront conservées pour la prochaine fois grâce aux volumes Docker !
+
+Les données PostgreSQL sont conservées grâce au volume Docker ; un prochain `docker compose up -d` retrouve la base.
+
+Pour tout supprimer (y compris les volumes) :
+
+```bash
+docker compose down -v
+```
+
+---
+
+## Scripts DevOps
+
+**Prérequis Windows :** exécuter ces scripts dans **Git Bash**.
+
+
+| Script             | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `./build-image.sh` | Construit les images backend et frontend localement                      |
+| `./push-image.sh`  | Pousse les images vers Docker Hub (`majeurbilly/crystal-`*)              |
+| `./start.sh`       | Réinitialisation complète : migrations EF, build sans cache, redémarrage |
+
+
+Avant de pousser les images : `docker login`
+
+Pour la production, voir `docker-compose.prod.yaml` (variables d'environnement `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`).
+
+---
+
+## Développement sans Docker (optionnel)
+
+### Backend
+
+```bash
+cd backend
+dotnet restore Crystal.sln
+dotnet run --project Crystal.API
+```
+
+Configuration par défaut : `backend/Crystal.API/appsettings.json` (PostgreSQL sur `localhost`).
+
+### Frontend
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+Ajuster `frontend/src/api/apiBaseUrl.ts` pour pointer vers l'API locale (ex. `http://localhost:8080`).
+
+### Première installation du frontend (squelette Vite)
+
+Si le dossier `frontend` n'a pas encore été initialisé :
+
+```bash
+cd frontend
+pnpm create vite . --template react-ts
+pnpm install
+```
+
+---
+
+## Tests
+
+### Backend (intégration)
+
+```bash
+cd backend
+dotnet test Crystal.sln
+```
+
+### Frontend (Vitest)
+
+```bash
+cd frontend
+pnpm test
+```
+
+Les pipelines CI sont définis dans `.azure-pipelines/`.
+
+---
+
+## Dépannage
+
+
+| Problème                                   | Solution                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `docker` non reconnu                       | Installer ou démarrer Docker Desktop, puis rouvrir le terminal                             |
+| Port déjà utilisé (3000, 8080, 5433, 5050) | Fermer l'autre application ou modifier le mappage dans `docker-compose.yaml`               |
+| Connexion échoue dans l'app                | Vérifier que `backend` est « Up » (`docker compose ps`) et tester Swagger sur le port 8080 |
+| Logs des conteneurs                        | `docker compose logs -f` ou `docker compose logs backend`                                  |
+
+
+---
+
+## Fichiers utiles
+
+
+| Fichier                                | Rôle                                            |
+| -------------------------------------- | ----------------------------------------------- |
+| `docker-compose.yaml`                  | Services principaux (PostgreSQL, API, frontend) |
+| `docker-compose.override.yaml`         | pgAdmin et environnement de développement       |
+| `frontend/nginx.conf`                  | Proxy `/api` et `/images` vers le backend       |
+| `frontend/src/api/apiBaseUrl.ts`       | URL de base de l'API côté navigateur            |
+| `backend/Crystal.API/appsettings.json` | Chaîne de connexion hors Docker                 |
+
+
+---
+
+*Projet ERP Crystal — équipe String.Empty*

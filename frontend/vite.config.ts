@@ -9,22 +9,6 @@ import checker from "vite-plugin-checker";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-	resolve: {
-		alias: {
-			"jwt-decode": path.resolve(__dirname, "src/shims/jwt-decode.ts"),
-		},
-	},
-	plugins: [
-		react(),
-		checker({
-			biome: true,
-			typescript: true,
-		}),
-	],
-	test: {
-		environment: "jsdom",
-		setupFiles: ["./src/setupTests.ts"],
-	},
 	server: {
 		proxy: {
 			"/api": {
@@ -36,5 +20,21 @@ export default defineConfig({
 				changeOrigin: true,
 			},
 		},
+	},
+	resolve: {
+		alias: {
+			"jwt-decode": path.resolve(__dirname, "src/shims/jwt-decode.ts"),
+		},
+	},
+	plugins: [
+		react(),
+		checker({
+			//biome: true,
+			typescript: true,
+		}),
+	],
+	test: {
+		environment: "jsdom",
+		setupFiles: ["./src/setupTests.ts"],
 	},
 });

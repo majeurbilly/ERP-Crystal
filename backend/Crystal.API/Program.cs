@@ -53,8 +53,20 @@ builder.Services.AddCors(p_options =>
     p_options.AddPolicy("FrontendPolicy", p_policy =>
     {
         p_policy.AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowAnyOrigin();
+              .AllowAnyMethod();
+
+        if (builder.Environment.IsProduction())
+        {
+            string[] allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? ["https://librairiecrystal.com"];
+
+            p_policy.WithOrigins(allowedOrigins);
+        }
+        else
+        {
+            p_policy.AllowAnyOrigin();
+        }
     });
 });
 
@@ -133,6 +145,7 @@ builder.Services.AddScoped<IEmployeeScopeService, EmployeeScopeService>();
 
 IConfigurationSection jwtSettings = builder.Configuration.GetRequiredSection("Jwt");
 byte[] key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+bool requireHttpsMetadata = builder.Environment.IsProduction();
 
 builder.Services.AddAuthentication(p_options =>
 {
@@ -141,7 +154,7 @@ builder.Services.AddAuthentication(p_options =>
 })
 .AddJwtBearer(p_options =>
 {
-    p_options.RequireHttpsMetadata = false;
+    p_options.RequireHttpsMetadata = requireHttpsMetadata;
     p_options.SaveToken = true;
 
     p_options.TokenValidationParameters = new TokenValidationParameters
@@ -159,27 +172,23 @@ builder.Services.AddAuthentication(p_options =>
 
 WebApplication app = builder.Build();
 
-bool migrateOnly = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
-
 using (IServiceScope scope = app.Services.CreateScope())
 {
     CrystalDbContext dbContext = scope.ServiceProvider.GetRequiredService<CrystalDbContext>();
 
-    if (migrateOnly)
-    {
-        await dbContext.Database.MigrateAsync().ConfigureAwait(false);
-        return;
-    }
-
-    if (app.Environment.IsDevelopment())
-    {
-        await dbContext.Database.MigrateAsync().ConfigureAwait(false);
-        await DataSeeder.SeedAllAsync(scope.ServiceProvider);
-    }
-    else if (app.Environment.IsEnvironment("Testing"))
+    if (app.Environment.IsEnvironment("Testing"))
     {
         await dbContext.Database.EnsureCreatedAsync().ConfigureAwait(false);
         await DataSeeder.SeedForIntegrationTestsAsync(scope.ServiceProvider).ConfigureAwait(false);
+    }
+    else
+    {
+        await dbContext.Database.MigrateAsync().ConfigureAwait(false);
+
+        if (app.Environment.IsDevelopment())
+        {
+            await DataSeeder.SeedAllAsync(scope.ServiceProvider);
+        }
     }
 }
 
